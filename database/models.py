@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Optional
-
-
-from database.crud import SQLiteFieldConstraint
+import sqlite3
+from database.crud import SQLiteFieldConstraint, create_table_sql
 from internal import SQLiteP
+
 
 @dataclass
 class MedicalConsultation:
@@ -28,26 +28,6 @@ class MedicalConsultation:
     seguimiento_fecha: Optional[date] = None
     seguimiento_observaciones: Optional[str] = None
 
-    def __init__(
-        self,
-        motivo_consulta: str,
-        historia_enfermedad_actual: str,
-        examen_fisico: str,
-        diagnostico: str,
-        plan_manejo: str,
-        seguimiento_fecha: Optional[date] = None,
-        seguimiento_observaciones: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de MedicalConsultation.
-        """
-        self.motivo_consulta = motivo_consulta
-        self.historia_enfermedad_actual = historia_enfermedad_actual
-        self.examen_fisico = examen_fisico
-        self.diagnostico = diagnostico
-        self.plan_manejo = plan_manejo
-        self.seguimiento_fecha = seguimiento_fecha
-        self.seguimiento_observaciones = seguimiento_observaciones
 
 @dataclass
 class InformacionGeneralPaciente:
@@ -67,8 +47,9 @@ class InformacionGeneralPaciente:
         estado_civil (Optional[str]): Estado civil (opcional).
         ocupacion (Optional[str]): Ocupación (opcional).
     """
-    id:int= field(metadata={SQLiteP: SQLiteFieldConstraint.PRIMARY_KEY|SQLiteFieldConstraint.UNIQUE})
-    nombre_completo: str =field(metadata={SQLiteP: SQLiteFieldConstraint.UNIQUE|SQLiteFieldConstraint.AUTOINCREMENT})
+    id: int = field(metadata={
+                    SQLiteP: SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE})
+    nombre_completo: str
     fecha_nacimiento: date
     edad: Optional[int] = None
     sexo: str = ""
@@ -80,34 +61,6 @@ class InformacionGeneralPaciente:
     estado_civil: Optional[str] = None
     ocupacion: Optional[str] = None
 
-    def __init__(
-        self,
-        nombre_completo: str,
-        fecha_nacimiento: date,
-        edad: Optional[int] = None,
-        sexo: str = "",
-        genero: Optional[str] = None,
-        cedula: str = "",
-        direccion: str = "",
-        telefono: Optional[str] = None,
-        email: Optional[str] = None,
-        estado_civil: Optional[str] = None,
-        ocupacion: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de InformacionGeneralPaciente.
-        """
-        self.nombre_completo = nombre_completo
-        self.fecha_nacimiento = fecha_nacimiento
-        self.edad = edad
-        self.sexo = sexo
-        self.genero = genero
-        self.cedula = cedula
-        self.direccion = direccion
-        self.telefono = telefono
-        self.email = email
-        self.estado_civil = estado_civil
-        self.ocupacion = ocupacion
 
 @dataclass
 class AntecedentesPersonales:
@@ -133,28 +86,6 @@ class AntecedentesPersonales:
     psiquiatricos: Optional[str] = None
     hospitalizaciones_previas: Optional[str] = None
 
-    def __init__(
-        self,
-        patologicos: Optional[str] = None,
-        quirurgicos: Optional[str] = None,
-        alergicos: Optional[str] = None,
-        traumaticos: Optional[str] = None,
-        toxicos: Optional[str] = None,
-        gineco_obstetricos: Optional[str] = None,
-        psiquiatricos: Optional[str] = None,
-        hospitalizaciones_previas: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de AntecedentesPersonales.
-        """
-        self.patologicos = patologicos
-        self.quirurgicos = quirurgicos
-        self.alergicos = alergicos
-        self.traumaticos = traumaticos
-        self.toxicos = toxicos
-        self.gineco_obstetricos = gineco_obstetricos
-        self.psiquiatricos = psiquiatricos
-        self.hospitalizaciones_previas = hospitalizaciones_previas
 
 @dataclass
 class AntecedentesFamiliares:
@@ -166,11 +97,6 @@ class AntecedentesFamiliares:
     """
     familiares: Optional[str] = None
 
-    def __init__(self, familiares: Optional[str] = None):
-        """
-        Inicializa una instancia de AntecedentesFamiliares.
-        """
-        self.familiares = familiares
 
 @dataclass
 class ExamenFisicoPorSistemas:
@@ -193,32 +119,6 @@ class ExamenFisicoPorSistemas:
     endocrino: Optional[str] = None
     psiquiatrico: Optional[str] = None
 
-    def __init__(
-        self,
-        general: Optional[str] = None,
-        neurologico: Optional[str] = None,
-        respiratorio: Optional[str] = None,
-        cardiovascular: Optional[str] = None,
-        gastrointestinal: Optional[str] = None,
-        genitourinario: Optional[str] = None,
-        musculo_esqueletico: Optional[str] = None,
-        dermatologico: Optional[str] = None,
-        endocrino: Optional[str] = None,
-        psiquiatrico: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de ExamenFisicoPorSistemas.
-        """
-        self.general = general
-        self.neurologico = neurologico
-        self.respiratorio = respiratorio
-        self.cardiovascular = cardiovascular
-        self.gastrointestinal = gastrointestinal
-        self.genitourinario = genitourinario
-        self.musculo_esqueletico = musculo_esqueletico
-        self.dermatologico = dermatologico
-        self.endocrino = endocrino
-        self.psiquiatrico = psiquiatrico
 
 @dataclass
 class ExamenFisico:
@@ -246,30 +146,6 @@ class ExamenFisico:
     extremidades: Optional[str] = None
     neurologico: Optional[str] = None
 
-    def __init__(
-        self,
-        signos_vitales: Optional[str] = None,
-        peso: Optional[float] = None,
-        talla: Optional[float] = None,
-        imc: Optional[float] = None,
-        cabeza_cuello: Optional[str] = None,
-        torax: Optional[str] = None,
-        abdomen: Optional[str] = None,
-        extremidades: Optional[str] = None,
-        neurologico: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de ExamenFisico.
-        """
-        self.signos_vitales = signos_vitales
-        self.peso = peso
-        self.talla = talla
-        self.imc = imc
-        self.cabeza_cuello = cabeza_cuello
-        self.torax = torax
-        self.abdomen = abdomen
-        self.extremidades = extremidades
-        self.neurologico = neurologico
 
 @dataclass
 class PlanManejo:
@@ -287,20 +163,6 @@ class PlanManejo:
     recomendaciones: Optional[str] = None
     remisiones: Optional[str] = None
 
-    def __init__(
-        self,
-        paraclinicos: Optional[str] = None,
-        medicamentos: Optional[str] = None,
-        recomendaciones: Optional[str] = None,
-        remisiones: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de PlanManejo.
-        """
-        self.paraclinicos = paraclinicos
-        self.medicamentos = medicamentos
-        self.recomendaciones = recomendaciones
-        self.remisiones = remisiones
 
 @dataclass
 class Seguimiento:
@@ -314,16 +176,6 @@ class Seguimiento:
     fecha_proximo_control: Optional[date] = None
     observaciones_adicionales: Optional[str] = None
 
-    def __init__(
-        self,
-        fecha_proximo_control: Optional[date] = None,
-        observaciones_adicionales: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de Seguimiento.
-        """
-        self.fecha_proximo_control = fecha_proximo_control
-        self.observaciones_adicionales = observaciones_adicionales
 
 @dataclass
 class Profesional:
@@ -341,20 +193,6 @@ class Profesional:
     especialidad: Optional[str] = None
     firma_digital: Optional[str] = None
 
-    def __init__(
-        self,
-        nombre: str,
-        numero_registro: str,
-        especialidad: Optional[str] = None,
-        firma_digital: Optional[str] = None
-    ):
-        """
-        Inicializa una instancia de Profesional.
-        """
-        self.nombre = nombre
-        self.numero_registro = numero_registro
-        self.especialidad = especialidad
-        self.firma_digital = firma_digital
 
 @dataclass
 class HistoriaClinica:
@@ -386,31 +224,39 @@ class HistoriaClinica:
     seguimiento: Seguimiento
     profesional: Profesional
 
-    def __init__(
-        self,
-        paciente: InformacionGeneralPaciente,
-        motivo_consulta: str,
-        enfermedad_actual: str,
-        antecedentes_personales: AntecedentesPersonales,
-        antecedentes_familiares: AntecedentesFamiliares,
-        examen_sistemas: ExamenFisicoPorSistemas,
-        examen_fisico: ExamenFisico,
-        impresion_diagnostica: str,
-        plan_manejo: PlanManejo,
-        seguimiento: Seguimiento,
-        profesional: Profesional
-    ):
-        """
-        Inicializa una instancia de HistoriaClinica.
-        """
-        self.paciente = paciente
-        self.motivo_consulta = motivo_consulta
-        self.enfermedad_actual = enfermedad_actual
-        self.antecedentes_personales = antecedentes_personales
-        self.antecedentes_familiares = antecedentes_familiares
-        self.examen_sistemas = examen_sistemas
-        self.examen_fisico = examen_fisico
-        self.impresion_diagnostica = impresion_diagnostica
-        self.plan_manejo = plan_manejo
-        self.seguimiento = seguimiento
-        self.profesional = profesional
+
+def make_database(path: str):
+    """
+    Crea una base de datos SQLite a partir de un conjunto de clases dataclass, 
+    generando las tablas correspondientes automáticamente.
+
+    Parámetros:
+        path (str): Ruta donde se creará o abrirá el archivo de la base de datos SQLite.
+
+    Funcionamiento:
+        - Define una lista de clases dataclass (`instances`) que representan los modelos de datos.
+        - Abre una conexión a la base de datos SQLite en la ruta especificada.
+        - Para cada clase en la lista:
+            - Se genera la sentencia SQL de creación de tabla usando `create_table_sql(instance)`.
+            - Se ejecuta la sentencia SQL para crear la tabla si no existe.
+            - Si ocurre un error durante la creación de la tabla, imprime el error y la sentencia SQL fallida para ayudar en la depuración.
+    """
+    instances = [
+        MedicalConsultation,
+        InformacionGeneralPaciente,
+        AntecedentesPersonales,
+        AntecedentesFamiliares,
+        ExamenFisicoPorSistemas,
+        ExamenFisico,
+        PlanManejo,
+        Seguimiento,
+        Profesional,
+        HistoriaClinica
+    ]
+    db: sqlite3.Connection = sqlite3.connect(path)
+    for instance in instances:
+        try:
+            db.execute(create_table_sql(instance))
+        except Exception as e:
+            print(f"{instance}: {e}")
+            print(create_table_sql(instance))
