@@ -3,7 +3,8 @@ from datetime import date
 from typing import Optional
 import sqlite3
 from database.crud import SQLiteFieldConstraint, create_table_sql
-from internal import Empty, SQLiteP
+from internal import DesignerP, Empty, SQLiteP
+from internal.designerflags import DesignerField, InputWidgetType
 
 
 @dataclass
@@ -26,19 +27,39 @@ class InformacionGeneralPaciente:
     Modelo que almacena la información general del paciente.
     """
     id: int = field(default=0, metadata={
-        SQLiteP: SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE
+        SQLiteP: SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE,
+        DesignerP: DesignerField(InputWidgetType.INPUT_INT, "Codigo", True)
     })
-    nombre_completo: str = Empty
-    fecha_nacimiento: date = field(default_factory=lambda: date(1900, 1, 1))
-    edad: Optional[int] = None
-    sexo: str = Empty
-    genero: Optional[str] = None
-    cedula: str = Empty
-    direccion: str = Empty
-    telefono: Optional[str] = None
-    email: Optional[str] = None
-    estado_civil: Optional[str] = None
-    ocupacion: Optional[str] = None
+
+    nombre_completo: Optional[str] = field(default=None, metadata={
+        DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Nombre Completo")})
+
+    fecha_nacimiento: Optional[date] = field(
+        default=None, metadata={DesignerP: DesignerField(InputWidgetType.DATE_PICKER, "Fecha de Nacimiento")})
+
+    edad: Optional[int] = field(default=None, metadata={
+                                DesignerP: DesignerField(InputWidgetType.INPUT_INT, "Edad")})
+
+    genero: Optional[str] = field(default=None, metadata={
+                                  DesignerP: DesignerField(InputWidgetType.COMBO, "Genero", items=["Masculino", "Femenino"])})
+
+    cedula: Optional[str] = field(default=None, metadata={
+        DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Cedula")})
+
+    direccion: Optional[str] = field(default=None, metadata={
+        DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Direccion",required= False)})
+
+    telefono: Optional[str] = field(default=None, metadata={
+                                    DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Telefono", required=False)})
+
+    email: Optional[str] = field(default=None, metadata={
+                                 DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Email", required=False)})
+
+    estado_civil: Optional[str] = field(default=None, metadata={
+                                        DesignerP: DesignerField(InputWidgetType.COMBO, "Estado Civil",  items=["Soltero", "Casado", "Divorciado", "Viudo", "Otro"])})
+
+    ocupacion: Optional[str] = field(default=None, metadata={
+                                     DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Ocupacion", required=False)})
 
 
 @dataclass

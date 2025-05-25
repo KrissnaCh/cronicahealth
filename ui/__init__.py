@@ -1,8 +1,10 @@
-from datetime import date
+
 import dearpygui.dearpygui as dpg
 
 from database.models import InformacionGeneralPaciente
-from ui.pacienteviewmodel import PacienteViewModel
+from ui.designer import Designer
+
+
 
 
 class Application:
@@ -11,17 +13,16 @@ class Application:
         print(f"Menu Item: {sender}")
 
     def __callback_patient_insert(self, sender):
-        dlg = PacienteViewModel(InformacionGeneralPaciente(id=1,
+        dlg = Designer(InformacionGeneralPaciente(id=1,
                                                            nombre_completo="Juan Pérez García",
-                                                           fecha_nacimiento=date(
-                                                               2025, 1, 1),
-                                                           edad=39,
-                                                           sexo="masculino",
-                                                           genero="hombre",
-                                                           cedula="12345678",
-                                                           direccion="Calle Falsa 123, Ciudad",
-                                                           telefono="555-1234",
-                                                           email="juan.perez@email.com",
+                                                           #fecha_nacimiento=date(
+                                                           #    2025, 1, 1),
+                                                           #edad=39,
+                                                           #genero="hombre",
+                                                           #cedula="12345678",
+                                                           #direccion="Calle Falsa 123, Ciudad",
+                                                           #telefono="555-1234",
+                                                           #email="juan.perez@email.com",
                                                            estado_civil="soltero",
                                                            ocupacion="Ingeniero"))
         
