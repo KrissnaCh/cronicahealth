@@ -2,7 +2,7 @@ from dataclasses import field, fields, is_dataclass
 from datetime import date
 from enum import Flag, auto
 from typing import Any
-from internal import SQLiteP
+from internal import SQLiteFieldConstraint, SQLITE_FLAGS
 
 def python_type_to_sqlite(py_type):
     if py_type == int:
@@ -28,7 +28,7 @@ def create_table_sql(dataclass_type):
     Consideraciones importantes:
     - Solo puede existir una columna AUTOINCREMENT y debe ser PRIMARY KEY (esto es una restricción de SQLite).
     - Se puede definir una PRIMARY KEY compuesta, pero en ese caso ninguna columna puede ser AUTOINCREMENT.
-    - Los metadatos se leen desde el parámetro 'metadata' de cada campo, usando la clave 'SQLiteP' y las constantes de SQLiteFieldConstraint.
+    - Los metadatos se leen desde el parámetro 'metadata' de cada campo, usando la clave 'SQLITE_FLAGS' y las constantes de SQLiteFieldConstraint.
     - Si no se define ninguna PRIMARY KEY, la tabla será básica sin clave primaria.
     - Si hay una columna AUTOINCREMENT, se asegura que sea la única PRIMARY KEY.
     - Si hay varias columnas PRIMARY KEY pero ninguna AUTOINCREMENT, se crea una clave primaria compuesta.
@@ -48,18 +48,18 @@ def create_table_sql(dataclass_type):
         col_def = f"\"{f.name}\" {col_type}"
 
         # Procesa metadatos para restricciones específicas
-        if f.metadata.__contains__(SQLiteP):
+        if f.metadata.__contains__(SQLITE_FLAGS):
             # PRIMARY KEY
-            if SQLiteFieldConstraint.PRIMARY_KEY in f.metadata[SQLiteP]:
+            if SQLiteFieldConstraint.PRIMARY_KEY in f.metadata[SQLITE_FLAGS]:
                 primarykey.append(f'"{f.name}"')
             # AUTOINCREMENT (solo una columna puede tenerlo)
-            if SQLiteFieldConstraint.AUTOINCREMENT in f.metadata[SQLiteP] and len(autoincrement) == 0:
+            if SQLiteFieldConstraint.AUTOINCREMENT in f.metadata[SQLITE_FLAGS] and len(autoincrement) == 0:
                 autoincrement.append(f'"{f.name}"')
             # UNIQUE
-            if SQLiteFieldConstraint.UNIQUE in f.metadata[SQLiteP]:
+            if SQLiteFieldConstraint.UNIQUE in f.metadata[SQLITE_FLAGS]:
                 col_def += " UNIQUE "
             # NOT NULL
-            if SQLiteFieldConstraint.NOT_NULL in f.metadata[SQLiteP]:
+            if SQLiteFieldConstraint.NOT_NULL in f.metadata[SQLITE_FLAGS]:
                 col_def += " NOT NULL "
 
         columns.append(col_def)
@@ -156,10 +156,5 @@ def to_select_query(instance, table_name=None, comparator="="):
     query = f'SELECT * FROM "{table_name}"{where_clause};'
     return query, params
 
-class SQLiteFieldConstraint(Flag):
-    PRIMARY_KEY =auto()
-    NOT_NULL =auto()
-    AUTOINCREMENT =auto()
-    UNIQUE =auto()
-    NONE=auto()
+
 

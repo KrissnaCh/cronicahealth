@@ -3,8 +3,7 @@ from datetime import date
 from typing import Optional
 import sqlite3
 from database.crud import SQLiteFieldConstraint, create_table_sql
-from internal import DesignerP, Empty, SQLiteP
-from internal.designerflags import DesignerField, InputWidgetType
+from internal import Empty, InputWidgetType, flags
 
 
 @dataclass
@@ -12,13 +11,41 @@ class MedicalConsultation:
     """
     Modelo que representa una consulta médica general.
     """
-    motivo_consulta: str = Empty
-    historia_enfermedad_actual: str = Empty
-    examen_fisico: str = Empty
-    diagnostico: str = Empty
-    plan_manejo: str = Empty
-    seguimiento_fecha: Optional[date] = None
-    seguimiento_observaciones: Optional[str] = None
+    motivo_consulta: Optional[str] = flags(default=None,
+                                           sqlite=SQLiteFieldConstraint.NONE,
+                                           tcontrol=InputWidgetType.INPUT_TEXT,
+                                           title="Motivo de Consulta",
+                                           required=True)
+
+    historia_enfermedad_actual: Optional[str] = flags(default=None,
+                                                      sqlite=SQLiteFieldConstraint.NONE,
+                                                      tcontrol=InputWidgetType.INPUT_TEXT,
+                                                      title="Historial")
+
+    examen_fisico: Optional[str] = flags(default=None,
+                                         sqlite=SQLiteFieldConstraint.NONE,
+                                         tcontrol=InputWidgetType.INPUT_TEXT,
+                                         title="Examen Fisico")
+
+    diagnostico: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="Diagnostico")
+
+    plan_manejo: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="Plan de Manejo")
+
+    seguimiento_fecha: Optional[date] = flags(default=None,
+                                              sqlite=SQLiteFieldConstraint.NONE,
+                                              tcontrol=InputWidgetType.DATE_PICKER,
+                                              title="Fecha")
+
+    seguimiento_observaciones: Optional[str] = flags(default=None,
+                                                     sqlite=SQLiteFieldConstraint.NONE,
+                                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                                     title="Observaciones")
 
 
 @dataclass
@@ -26,40 +53,71 @@ class InformacionGeneralPaciente:
     """
     Modelo que almacena la información general del paciente.
     """
-    id: int = field(default=0, metadata={
-        SQLiteP: SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE,
-        DesignerP: DesignerField(InputWidgetType.INPUT_INT, "Codigo", True)
-    })
+    id: int = flags(default=0,
+                    sqlite=SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE,
+                    tcontrol=InputWidgetType.INPUT_INT,
+                    title="Codigo",
+                    readonly=True)
 
-    nombre_completo: Optional[str] = field(default=None, metadata={
-        DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Nombre Completo")})
+    nombre_completo: Optional[str] = flags(default=None,
+                                           sqlite=SQLiteFieldConstraint.NONE,
+                                           tcontrol=InputWidgetType.INPUT_TEXT,
+                                           title="Nombre Completo")
 
-    fecha_nacimiento: Optional[date] = field(
-        default=None, metadata={DesignerP: DesignerField(InputWidgetType.DATE_PICKER, "Fecha de Nacimiento")})
+    fecha_nacimiento: Optional[date] = flags(default=None,
+                                             sqlite=SQLiteFieldConstraint.NONE,
+                                             tcontrol=InputWidgetType.DATE_PICKER,
+                                             title="Fecha de Nacimiento")
 
-    edad: Optional[int] = field(default=None, metadata={
-                                DesignerP: DesignerField(InputWidgetType.INPUT_INT, "Edad")})
+    edad: Optional[int] = flags(default=None,
+                                sqlite=SQLiteFieldConstraint.NONE,
+                                tcontrol=InputWidgetType.INPUT_INT,
+                                title="Edad")
 
-    genero: Optional[str] = field(default=None, metadata={
-                                  DesignerP: DesignerField(InputWidgetType.COMBO, "Genero", items=["Masculino", "Femenino"])})
+    genero: Optional[str] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.COMBO,
+                                  title="Genero",
+                                  items=["Masculino", "Femenino"])
 
-    cedula: Optional[str] = field(default=None, metadata={
-        DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Cedula")})
+    cedula: Optional[str] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.INPUT_TEXT,
+                                  title="Cedula")
 
-    direccion: Optional[str] = field(default=None, metadata={
-        DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Direccion",required= False)})
+    direccion: Optional[str] = flags(default=None, sqlite=SQLiteFieldConstraint.NONE,
+                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                     title="Direccion",
+                                     required=False,)
 
-    telefono: Optional[str] = field(default=None, metadata={
-                                    DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Telefono", required=False)})
+    telefono: Optional[str] = flags(default=None,
+                                    sqlite=SQLiteFieldConstraint.NONE,
+                                    tcontrol=InputWidgetType.INPUT_TEXT,
+                                    title="Telefono",
+                                    required=False)
 
-    email: Optional[str] = field(default=None, metadata={
-                                 DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Email", required=False)})
+    email: Optional[str] = flags(default=None,
+                                 sqlite=SQLiteFieldConstraint.NONE,
+                                 tcontrol=InputWidgetType.INPUT_TEXT,
+                                 title="Email",
+                                 required=False)
 
-    estado_civil: Optional[str] = field(default=None, metadata={
-                                        DesignerP: DesignerField(InputWidgetType.COMBO, "Estado Civil",  items=["Soltero", "Casado", "Divorciado", "Viudo", "Otro"])})
+    estado_civil: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.COMBO,
+                                        title="Estado Civil",
+                                        items=[
+                                            "Soltero",
+                                            "Casado",
+                                            "Divorciado",
+                                            "Viudo",
+                                            "Otro"])
 
-    ocupacion: Optional[str] = field(default=None, metadata={
-                                     DesignerP: DesignerField(InputWidgetType.INPUT_TEXT, "Ocupacion", required=False)})
+    ocupacion: Optional[str] = flags(default=None,
+                                     sqlite=SQLiteFieldConstraint.NONE,
+                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                     title="Ocupacion",
+                                     required=False)
 
 
 @dataclass
@@ -67,14 +125,45 @@ class AntecedentesPersonales:
     """
     Modelo que almacena los antecedentes personales del paciente.
     """
-    patologicos: Optional[str] = None
-    quirurgicos: Optional[str] = None
-    alergicos: Optional[str] = None
-    traumaticos: Optional[str] = None
-    toxicos: Optional[str] = None
-    gineco_obstetricos: Optional[str] = None
-    psiquiatricos: Optional[str] = None
-    hospitalizaciones_previas: Optional[str] = None
+    patologicos: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="Patológicos")
+
+    quirurgicos: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="Quirúrgicos")
+
+    alergicos: Optional[str] = flags(default=None,
+                                     sqlite=SQLiteFieldConstraint.NONE,
+                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                     title="Alergicos")
+
+    traumaticos: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="Traumáticos")
+
+    toxicos: Optional[str] = flags(default=None,
+                                   sqlite=SQLiteFieldConstraint.NONE,
+                                   tcontrol=InputWidgetType.INPUT_TEXT,
+                                   title="Tóxicos")
+
+    gineco_obstetricos: Optional[str] = flags(default=None,
+                                              sqlite=SQLiteFieldConstraint.NONE,
+                                              tcontrol=InputWidgetType.INPUT_TEXT,
+                                              title="gineco-obstétricos")
+
+    psiquiatricos: Optional[str] = flags(default=None,
+                                         sqlite=SQLiteFieldConstraint.NONE,
+                                         tcontrol=InputWidgetType.INPUT_TEXT,
+                                         title="Psiquiátricos")
+
+    hospitalizaciones_previas: Optional[str] = flags(default=None,
+                                                     sqlite=SQLiteFieldConstraint.NONE,
+                                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                                     title="Hospitalizaciones Previas")
 
 
 @dataclass
@@ -90,16 +179,55 @@ class ExamenFisicoPorSistemas:
     """
     Modelo de revisión de síntomas por sistemas.
     """
-    general: Optional[str] = None
-    neurologico: Optional[str] = None
-    respiratorio: Optional[str] = None
-    cardiovascular: Optional[str] = None
-    gastrointestinal: Optional[str] = None
-    genitourinario: Optional[str] = None
-    musculo_esqueletico: Optional[str] = None
-    dermatologico: Optional[str] = None
-    endocrino: Optional[str] = None
-    psiquiatrico: Optional[str] = None
+    general: Optional[str] = flags(default=None,
+                                   sqlite=SQLiteFieldConstraint.NONE,
+                                   tcontrol=InputWidgetType.INPUT_TEXT,
+                                   title="")
+
+    neurologico: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="")
+
+    respiratorio: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="")
+
+    cardiovascular: Optional[str] = flags(default=None,
+                                          sqlite=SQLiteFieldConstraint.NONE,
+                                          tcontrol=InputWidgetType.INPUT_TEXT,
+                                          title="")
+
+    gastrointestinal: Optional[str] = flags(default=None,
+                                            sqlite=SQLiteFieldConstraint.NONE,
+                                            tcontrol=InputWidgetType.INPUT_TEXT,
+                                            title="")
+
+    genitourinario: Optional[str] = flags(default=None,
+                                          sqlite=SQLiteFieldConstraint.NONE,
+                                          tcontrol=InputWidgetType.INPUT_TEXT,
+                                          title="")
+
+    musculo_esqueletico: Optional[str] = flags(default=None,
+                                               sqlite=SQLiteFieldConstraint.NONE,
+                                               tcontrol=InputWidgetType.INPUT_TEXT,
+                                               title="")
+
+    dermatologico: Optional[str] = flags(default=None,
+                                         sqlite=SQLiteFieldConstraint.NONE,
+                                         tcontrol=InputWidgetType.INPUT_TEXT,
+                                         title="")
+
+    endocrino: Optional[str] = flags(default=None,
+                                     sqlite=SQLiteFieldConstraint.NONE,
+                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                     title="")
+
+    psiquiatrico: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="")
 
 
 @dataclass
@@ -107,15 +235,50 @@ class ExamenFisico:
     """
     Modelo para el examen físico general.
     """
-    signos_vitales: Optional[str] = None
-    peso: Optional[float] = None
-    talla: Optional[float] = None
-    imc: Optional[float] = None
-    cabeza_cuello: Optional[str] = None
-    torax: Optional[str] = None
-    abdomen: Optional[str] = None
-    extremidades: Optional[str] = None
-    neurologico: Optional[str] = None
+    signos_vitales: Optional[str] = flags(default=None,
+                                          sqlite=SQLiteFieldConstraint.NONE,
+                                          tcontrol=InputWidgetType.INPUT_TEXT,
+                                          title="")
+
+    peso: Optional[float] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.INPUT_FLOAT,
+                                  title="")
+
+    talla: Optional[float] = flags(default=None,
+                                   sqlite=SQLiteFieldConstraint.NONE,
+                                   tcontrol=InputWidgetType.INPUT_FLOAT,
+                                   title="")
+
+    imc: Optional[float] = flags(default=None,
+                                 sqlite=SQLiteFieldConstraint.NONE,
+                                 tcontrol=InputWidgetType.INPUT_FLOAT,
+                                 title="")
+
+    cabeza_cuello: Optional[str] = flags(default=None,
+                                         sqlite=SQLiteFieldConstraint.NONE,
+                                         tcontrol=InputWidgetType.INPUT_TEXT,
+                                         title="")
+
+    torax: Optional[str] = flags(default=None,
+                                 sqlite=SQLiteFieldConstraint.NONE,
+                                 tcontrol=InputWidgetType.INPUT_TEXT,
+                                 title="")
+
+    abdomen: Optional[str] = flags(default=None,
+                                   sqlite=SQLiteFieldConstraint.NONE,
+                                   tcontrol=InputWidgetType.INPUT_TEXT,
+                                   title="")
+
+    extremidades: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="")
+
+    neurologico: Optional[str] = flags(default=None,
+                                       sqlite=SQLiteFieldConstraint.NONE,
+                                       tcontrol=InputWidgetType.INPUT_TEXT,
+                                       title="")
 
 
 @dataclass
@@ -123,10 +286,25 @@ class PlanManejo:
     """
     Modelo para el plan de manejo clínico.
     """
-    paraclinicos: Optional[str] = None
-    medicamentos: Optional[str] = None
-    recomendaciones: Optional[str] = None
-    remisiones: Optional[str] = None
+    paraclinicos: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="")
+
+    medicamentos: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="")
+
+    recomendaciones: Optional[str] = flags(default=None,
+                                           sqlite=SQLiteFieldConstraint.NONE,
+                                           tcontrol=InputWidgetType.INPUT_TEXT,
+                                           title="")
+
+    remisiones: Optional[str] = flags(default=None,
+                                      sqlite=SQLiteFieldConstraint.NONE,
+                                      tcontrol=InputWidgetType.INPUT_TEXT,
+                                      title="")
 
 
 @dataclass
@@ -134,8 +312,15 @@ class Seguimiento:
     """
     Modelo para el seguimiento del paciente.
     """
-    fecha_proximo_control: Optional[date] = None
-    observaciones_adicionales: Optional[str] = None
+    fecha_proximo_control: Optional[date] = flags(default=None,
+                                                  sqlite=SQLiteFieldConstraint.NONE,
+                                                  tcontrol=InputWidgetType.DATE_PICKER,
+                                                  title="")
+
+    observaciones_adicionales: Optional[str] = flags(default=None,
+                                                     sqlite=SQLiteFieldConstraint.NONE,
+                                                     tcontrol=InputWidgetType.INPUT_TEXT,
+                                                     title="")
 
 
 @dataclass
@@ -143,10 +328,22 @@ class Profesional:
     """
     Modelo que almacena los datos del profesional de la salud.
     """
-    nombre: str = Empty
-    numero_registro: str = Empty
-    especialidad: Optional[str] = None
-    firma_digital: Optional[str] = None
+    nombre: str = flags(default=None,
+                        sqlite=SQLiteFieldConstraint.NONE,
+                        tcontrol=InputWidgetType.INPUT_TEXT,
+                        title="")
+    numero_registro: str = flags(default=None,
+                                 sqlite=SQLiteFieldConstraint.NONE,
+                                 tcontrol=InputWidgetType.INPUT_TEXT,
+                                 title="")
+    especialidad: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="")
+    firma_digital: Optional[str] = flags(default=None,
+                                         sqlite=SQLiteFieldConstraint.NONE,
+                                         tcontrol=InputWidgetType.INPUT_TEXT,
+                                         title="")
 
 
 @dataclass
@@ -205,4 +402,3 @@ def make_database(path: str):
             db.execute(create_table_sql(instance))
         except Exception as e:
             print(f"{instance}: {e}")
-            print(create_table_sql(instance))

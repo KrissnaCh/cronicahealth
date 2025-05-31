@@ -2,24 +2,74 @@ from dataclasses import fields, is_dataclass
 from datetime import date
 from enum import Enum, auto
 import dearpygui.dearpygui as dpg
-from internal import DesignerP, Empty
-from internal.designerflags import DesignerField, InputWidgetType
+from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, TITLE, Empty, InputWidgetType
 
 
-class Designer:
+class FormDetailDesigner:
     _counter = 0  # Contador de clase para IDs únicos
 
     def show(self):
         dpg.show_item(self._window_id)
 
-    def __add_input_text(self, label, default_value, _readonly) -> (int | str):
+    def __init__(self, model):
+
+        if not is_dataclass(model):
+            raise ValueError("entrada debe ser una instancia de dataclass.")
+
+        # Generar ID único
+        self._window_id = f"FormDetailDesigner{FormDetailDesigner._counter}"
+        self._group_id = f"FormDetailDesigner{FormDetailDesigner._counter}"
+        FormDetailDesigner._counter += 1
+        self.model = model
+        self.designer_fields = [CONTROL, TITLE,
+                                READONLY, REQUIRED, ITEMS, SEARCHABLE]
+        self.model_type = type(model)
+        self.builder = DesignerBuilder()
+        self.__create_ui()
+
+    def mark_required(self, str, required) -> str:
+        val = Empty.join(str)
+        if required == True:
+            return val + " *"
+        else:
+            return val
+
+    def __create_ui(self):
+        with dpg.window(tag=self._window_id, label="Información del Paciente", autosize=True, no_collapse=True):
+            for f in fields(self.model):
+                if all(key in f.metadata for key in self.designer_fields):
+                    match f.metadata[CONTROL]:
+                        case InputWidgetType.INPUT_INT:
+                            self.builder.add_input_int(self.mark_required(
+                                f.metadata[TITLE],  f.metadata[REQUIRED]), getattr(self.model, f.name),  f.metadata[READONLY])
+                            pass
+                        case InputWidgetType.INPUT_TEXT:
+                            self.builder.add_input_text(self.mark_required(
+                                f.metadata[TITLE], f.metadata[REQUIRED]), getattr(self.model, f.name), f.metadata[READONLY])
+                            pass
+                        case InputWidgetType.INPUT_FLOAT:
+                            self.builder.add_input_float(self.mark_required(
+                                f.metadata[TITLE], f.metadata[REQUIRED]), getattr(self.model, f.name), f.metadata[READONLY])
+                            pass
+                        case InputWidgetType.DATE_PICKER:
+                            self.builder.add_date_picker(self.mark_required(
+                                f.metadata[TITLE], f.metadata[REQUIRED]), getattr(self.model, f.name), f.metadata[READONLY])
+                        case InputWidgetType.COMBO:
+                            self.builder.add_combo(self.mark_required(
+                                f.metadata[TITLE], f.metadata[REQUIRED]), f.metadata[ITEMS], getattr(self.model, f.name), f.metadata[READONLY])
+                        case _:
+                            pass
+
+
+class DesignerBuilder:
+    def add_input_text(self, label, default_value, _readonly) -> (int | str):
         with dpg.group(horizontal=True):
             dpg.add_text(label)
             return dpg.add_input_text(
                 default_value=default_value if default_value else "", readonly=_readonly
             )
 
-    def __add_input_int(self, label, default_value, _readonly) -> (int | str):
+    def add_input_int(self, label, default_value, _readonly) -> (int | str):
         if _readonly == False:
             with dpg.group(horizontal=True):
                 dpg.add_text(label)
@@ -29,9 +79,9 @@ class Designer:
                     min_clamped=True
                 )
         else:
-            return self.__add_input_text(label,str(default_value), _readonly)
+            return self.add_input_text(label, str(default_value), _readonly)
 
-    def __add_input_float(self, label, default_value, _readonly) -> (int | str):
+    def add_input_float(self, label, default_value, _readonly) -> (int | str):
         if _readonly == False:
             with dpg.group(horizontal=True):
                 dpg.add_text(label)
@@ -42,9 +92,9 @@ class Designer:
                     readonly=_readonly
                 )
         else:
-            return self.__add_input_text(label,str(default_value), _readonly)
+            return self.add_input_text(label, str(default_value), _readonly)
 
-    def __add_combo(self, label,  items, default_value, readonly) -> (int | str):
+    def add_combo(self, label,  items, default_value, readonly) -> (int | str):
         if readonly == False:
             with dpg.group(horizontal=True):
                 dpg.add_text(label)
@@ -53,14 +103,13 @@ class Designer:
                     default_value=default_value if default_value else ""
                 )
         else:
-            return self.__add_input_text(label,default_value, readonly)
-        
+            return self.add_input_text(label, default_value, readonly)
 
-    def __add_date_picker(self, label, default_date:date, readonly) -> (int | str):
+    def add_date_picker(self, label, default_date: date, readonly) -> (int | str):
         if readonly == False:
             with dpg.group(horizontal=True):
                 dpg.add_text(label)
-                if default_date :
+                if default_date:
                     return dpg.add_date_picker(
                         default_value={
                             'year': default_date.year-1900,
@@ -71,60 +120,52 @@ class Designer:
                 else:
                     return dpg.add_date_picker()
         else:
-            return self.__add_input_text(label,default_date.strftime("%d/%m/%Y") if default_date else "", readonly)
+            return self.add_input_text(label, default_date.strftime("%d/%m/%Y") if default_date else "", readonly)
+
+
+class FormSearcherDesigner:
+    _counter = 0  # Contador de clase para IDs únicos
+
+    def show(self):
+        dpg.show_item(self._window_id)
 
     def __init__(self, model):
-
         if not is_dataclass(model):
-            raise ValueError("Input must be a dataclass instance.")
+            raise ValueError("entrada debe ser una instancia de dataclass.")
 
         # Generar ID único
-        self._window_id = f"PacienteViewModeldialog_{Designer._counter}"
-        self._group_id = f"PacienteViewModelgroup_{Designer._counter}"
-        Designer._counter += 1
+        self._window_id = f"FormSearcherDesigner{FormSearcherDesigner._counter}"
+        FormSearcherDesigner._counter += 1
         self.model = model
+        self.designer_fields = [CONTROL, TITLE,
+                                READONLY, REQUIRED, ITEMS, SEARCHABLE]
         self.model_type = type(model)
-        self._create_ui()
+        self.builder = DesignerBuilder()
+        self.__create_ui()
 
-    def mark_required(self, str, required) -> str:
-        val = Empty.join(str)
-        if required == True:
-            return val + " *"
-        else:
-            return val
-
-    def _create_ui(self):
-        with dpg.window(tag=self._window_id, label="Información del Paciente", autosize=True,no_collapse=True):
-            with dpg.group(tag=self._group_id):
-
-                """with dpg.group(horizontal=True):
-                    dpg.add_text("ID:")
-                    self.ui_elements["id"] = dpg.add_input_text(
-                        default_value=str(self.model.id),
-                        enabled=False
-                    )"""
-
-                for f in fields(self.model):
-                    if f.metadata.__contains__(DesignerP):
-                        args: DesignerField = f.metadata[DesignerP]
-                        match args.tcontrol:
+    def __create_ui(self):
+        with dpg.window(tag=self._window_id, label="Buscar Paciente", autosize=True, no_collapse=True):
+            for f in fields(self.model):
+                if all(key in f.metadata for key in self.designer_fields):
+                    if f.metadata[SEARCHABLE] == True:
+                        match f.metadata[CONTROL]:
                             case InputWidgetType.INPUT_INT:
-                                self.__add_input_int(self.mark_required(
-                                    args.title, args.required), getattr(self.model, f.name), args.readonly)
+                                self.builder.add_input_int(f.metadata[TITLE], getattr(
+                                    self.model, f.name),  f.metadata[READONLY])
                                 pass
                             case InputWidgetType.INPUT_TEXT:
-                                self.__add_input_text(self.mark_required(
-                                    args.title, args.required), getattr(self.model, f.name), args.readonly)
+                                self.builder.add_input_text(f.metadata[TITLE], getattr(
+                                    self.model, f.name), f.metadata[READONLY])
                                 pass
                             case InputWidgetType.INPUT_FLOAT:
-                                self.__add_input_float(self.mark_required(
-                                    args.title, args.required), getattr(self.model, f.name), args.readonly)
+                                self.builder.add_input_float(f.metadata[TITLE], getattr(
+                                    self.model, f.name), f.metadata[READONLY])
                                 pass
                             case InputWidgetType.DATE_PICKER:
-                                self.__add_date_picker(self.mark_required(
-                                    args.title, args.required), getattr(self.model, f.name), args.readonly)
+                                self.builder.add_date_picker(f.metadata[TITLE], getattr(
+                                    self.model, f.name), f.metadata[READONLY])
                             case InputWidgetType.COMBO:
-                                self.__add_combo(self.mark_required(
-                                    args.title, args.required),args.items, getattr(self.model, f.name), args.readonly)
+                                self.builder.add_combo(f.metadata[TITLE], f.metadata[ITEMS], getattr(
+                                    self.model, f.name), f.metadata[READONLY])
                             case _:
                                 pass

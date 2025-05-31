@@ -1,10 +1,9 @@
 
+from datetime import date
 import dearpygui.dearpygui as dpg
 
 from database.models import InformacionGeneralPaciente
-from ui.designer import Designer
-
-
+from ui.designer import FormDetailDesigner, FormSearcherDesigner
 
 
 class Application:
@@ -13,19 +12,19 @@ class Application:
         print(f"Menu Item: {sender}")
 
     def __callback_patient_insert(self, sender):
-        dlg = Designer(InformacionGeneralPaciente(id=1,
-                                                           nombre_completo="Juan Pérez García",
-                                                           #fecha_nacimiento=date(
-                                                           #    2025, 1, 1),
-                                                           #edad=39,
-                                                           #genero="hombre",
-                                                           #cedula="12345678",
-                                                           #direccion="Calle Falsa 123, Ciudad",
-                                                           #telefono="555-1234",
-                                                           #email="juan.perez@email.com",
-                                                           estado_civil="soltero",
-                                                           ocupacion="Ingeniero"))
-        
+        dlg = FormSearcherDesigner(InformacionGeneralPaciente(id=1,
+                                                              nombre_completo="Juan Pérez García",
+                                                              fecha_nacimiento=date(
+                                                                  2025, 1, 1),
+                                                              edad=39,
+                                                              genero="hombre",
+                                                              cedula="12345678",
+                                                              direccion="Calle Falsa 123, Ciudad",
+                                                              telefono="555-1234",
+                                                              email="juan.perez@email.com",
+                                                              estado_civil="soltero",
+                                                              ocupacion="Ingeniero"))
+
         pass
 
     def __callback_patient_update(self, sender):
