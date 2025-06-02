@@ -7,23 +7,32 @@ from ui.designer import FormDetailDesigner, FormSearcherDesigner
 
 
 class Application:
+    def __example_callback(self, old, new):
+        pass
 
     def print_me(self, sender):
         print(f"Menu Item: {sender}")
 
     def __callback_patient_insert(self, sender):
-        dlg = FormSearcherDesigner(InformacionGeneralPaciente(id=1,
-                                                              nombre_completo="Juan Pérez García",
-                                                              fecha_nacimiento=date(
-                                                                  2025, 1, 1),
-                                                              edad=39,
-                                                              genero="hombre",
-                                                              cedula="12345678",
-                                                              direccion="Calle Falsa 123, Ciudad",
-                                                              telefono="555-1234",
-                                                              email="juan.perez@email.com",
-                                                              estado_civil="soltero",
-                                                              ocupacion="Ingeniero"))
+        patieninfo = InformacionGeneralPaciente(id=1,
+                                                nombre_completo="Juan Pérez García",
+                                                fecha_nacimiento=date(
+                                                    2025, 1, 1),
+                                                edad=39,
+                                                genero="hombre",
+                                                cedula="12345678",
+                                                direccion="Calle Falsa 123, Ciudad",
+                                                telefono="555-1234",
+                                                email="juan.perez@email.com",
+                                                estado_civil="soltero",
+                                                ocupacion="Ingeniero")
+        
+        dlg = FormDetailDesigner(patieninfo,
+                                 "informacion General del Paciente", 
+                                 save_callback = self.__example_callback, 
+                                 update_callback=self.__example_callback, 
+                                 delete_callback=self.__example_callback)
+        dlg.show()
 
         pass
 

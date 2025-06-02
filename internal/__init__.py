@@ -2,6 +2,7 @@ from dataclasses import MISSING, Field, field
 from enum import Enum, Flag, auto
 from typing import Optional
 
+ControlID = tuple[(int | str), (int | str)]
 
 class SQLiteFieldConstraint(Flag):
     PRIMARY_KEY = auto()

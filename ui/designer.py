@@ -1,124 +1,167 @@
 from dataclasses import fields, is_dataclass
 from datetime import date
 from enum import Enum, auto
+from typing import Union
 import dearpygui.dearpygui as dpg
-from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, TITLE, Empty, InputWidgetType
+from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, TITLE, ControlID, Empty, InputWidgetType
 
 
 class FormDetailDesigner:
-    _counter = 0  # Contador de clase para IDs únicos
-
     def show(self):
+        """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
 
-    def __init__(self, model):
-
+    def __init__(self, model, title: str, save_callback=None, update_callback=None, delete_callback=None, closeonexec=True):
+        """Inicializa el diseñador de formularios de detalle.
+        Args:
+            model: Una instancia de dataclass que define el modelo del formulario.
+            title: Título de la ventana del formulario.
+        Raises:
+            ValueError: Si el modelo no es una instancia de dataclass.
+        """
+        # Verifica si el modelo es una instancia de dataclass
         if not is_dataclass(model):
             raise ValueError("entrada debe ser una instancia de dataclass.")
 
-        # Generar ID único
-        self._window_id = f"FormDetailDesigner{FormDetailDesigner._counter}"
-        self._group_id = f"FormDetailDesigner{FormDetailDesigner._counter}"
-        FormDetailDesigner._counter += 1
+        self._window_id: Union[int, str] = 0
         self.model = model
+        self._title = title
         self.designer_fields = [CONTROL, TITLE,
                                 READONLY, REQUIRED, ITEMS, SEARCHABLE]
+
+        # callbacks para guardar, actualizar y eliminar
+        self._save_callback = save_callback
+        self._update_callback = update_callback
+        self._delete_callback = delete_callback
+
+        # Indica si se debe cerrar la ventana al ejecutar una acción.
+        self._closeonexec = closeonexec
+
         self.model_type = type(model)
         self.builder = DesignerBuilder()
+        
         self.__create_ui()
 
-    def mark_required(self, str, required) -> str:
-        val = Empty.join(str)
-        if required == True:
-            return val + " *"
-        else:
-            return val
+    def mark_required(self, value, required) -> str:
+        """Marca un campo como requerido en el formulario.
+        Args:
+            value: El texto del campo.
+            required: Un booleano que indica si el campo es requerido.
+        Returns:
+            str: El texto del campo, con un asterisco (*) al final si es requerido.
+        """
+        val = value if isinstance(value, str) else Empty.join(value)
+        return f"{val} *" if required else val
 
     def __create_ui(self):
-        with dpg.window(tag=self._window_id, label="Información del Paciente", autosize=True, no_collapse=True):
+        """Crea la interfaz de usuario del formulario de detalle."""
+        # Genera un ID único para la ventana
+        with dpg.window(label=self._title, autosize=True, no_collapse=True, show=False) as self._window_id:
+            # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
+            just = max((len(f.metadata[TITLE]) for f in fields(self.model)
+                        if all(key in f.metadata for key in self.designer_fields)), default=0)
             for f in fields(self.model):
                 if all(key in f.metadata for key in self.designer_fields):
                     match f.metadata[CONTROL]:
                         case InputWidgetType.INPUT_INT:
                             self.builder.add_input_int(self.mark_required(
-                                f.metadata[TITLE],  f.metadata[REQUIRED]), getattr(self.model, f.name),  f.metadata[READONLY])
+                                f.metadata[TITLE],  f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name),  f.metadata[READONLY])
                             pass
                         case InputWidgetType.INPUT_TEXT:
                             self.builder.add_input_text(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]), getattr(self.model, f.name), f.metadata[READONLY])
+                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name), f.metadata[READONLY])
                             pass
                         case InputWidgetType.INPUT_FLOAT:
                             self.builder.add_input_float(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]), getattr(self.model, f.name), f.metadata[READONLY])
+                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name), f.metadata[READONLY])
                             pass
                         case InputWidgetType.DATE_PICKER:
                             self.builder.add_date_picker(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]), getattr(self.model, f.name), f.metadata[READONLY])
+                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name), f.metadata[READONLY])
                         case InputWidgetType.COMBO:
                             self.builder.add_combo(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]), f.metadata[ITEMS], getattr(self.model, f.name), f.metadata[READONLY])
+                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), f.metadata[ITEMS], getattr(self.model, f.name), f.metadata[READONLY])
                         case _:
                             pass
+            dpg.add_separator()
+            with dpg.group(horizontal=True):
+                if self._save_callback:
+                    dpg.add_button(
+                        label="Guardar", callback=self._save_callback, user_data=self.model)
+                if self._update_callback:
+                    dpg.add_button(
+                        label="Actualizar", callback=self._update_callback, user_data=self.model)
+                if self._delete_callback:
+                    dpg.add_button(
+                        label="Eliminar", callback=self._delete_callback, user_data=self.model)
+            pass
+        
+
+
+
 
 
 class DesignerBuilder:
-    def add_input_text(self, label, default_value, _readonly) -> (int | str):
+    def add_input_text(self, label, default_value, _readonly) -> ControlID:
         with dpg.group(horizontal=True):
-            dpg.add_text(label)
-            return dpg.add_input_text(
+            id = dpg.add_text(label)
+            return (id, dpg.add_input_text(
                 default_value=default_value if default_value else "", readonly=_readonly
-            )
+            ))
+            
 
-    def add_input_int(self, label, default_value, _readonly) -> (int | str):
+    def add_input_int(self, label, default_value, _readonly) -> ControlID:
         if _readonly == False:
             with dpg.group(horizontal=True):
-                dpg.add_text(label)
-                return dpg.add_input_int(
+                id = dpg.add_text(label)
+                return (id,dpg.add_input_int(
                     default_value=default_value if default_value else 0,
                     min_value=0,
                     min_clamped=True
-                )
+                ))
         else:
             return self.add_input_text(label, str(default_value), _readonly)
 
-    def add_input_float(self, label, default_value, _readonly) -> (int | str):
+    def add_input_float(self, label, default_value, _readonly) -> ControlID:
         if _readonly == False:
             with dpg.group(horizontal=True):
-                dpg.add_text(label)
-                return dpg.add_input_float(
+                id = dpg.add_text(label)
+                return (id, dpg.add_input_float(
                     default_value=default_value if default_value else 0,
                     min_value=0,
                     min_clamped=True,
                     readonly=_readonly
-                )
+                ))
+
         else:
             return self.add_input_text(label, str(default_value), _readonly)
 
-    def add_combo(self, label,  items, default_value, readonly) -> (int | str):
+    def add_combo(self, label,  items, default_value, readonly) -> ControlID:
         if readonly == False:
             with dpg.group(horizontal=True):
-                dpg.add_text(label)
-                return dpg.add_combo(
+                id = dpg.add_text(label)
+                return (id, dpg.add_combo(
                     items=items,
                     default_value=default_value if default_value else ""
-                )
+                ))
         else:
             return self.add_input_text(label, default_value, readonly)
 
-    def add_date_picker(self, label, default_date: date, readonly) -> (int | str):
+    def add_date_picker(self, label, default_date: date, readonly) -> ControlID:
         if readonly == False:
             with dpg.group(horizontal=True):
-                dpg.add_text(label)
+                id = dpg.add_text(label)
                 if default_date:
-                    return dpg.add_date_picker(
+                    return (id, dpg.add_date_picker(
                         default_value={
                             'year': default_date.year-1900,
                             'month': default_date.month-1,
                             'month_day': default_date.day
                         }
-                    )
+                    ))
                 else:
-                    return dpg.add_date_picker()
+                    return (id, dpg.add_date_picker())
+
         else:
             return self.add_input_text(label, default_date.strftime("%d/%m/%Y") if default_date else "", readonly)
 
@@ -129,11 +172,12 @@ class FormSearcherDesigner:
     def show(self):
         dpg.show_item(self._window_id)
 
-    def __init__(self, model):
+    def __init__(self, model, title: str):
         if not is_dataclass(model):
             raise ValueError("entrada debe ser una instancia de dataclass.")
 
         # Generar ID único
+        self._title = title
         self._window_id = f"FormSearcherDesigner{FormSearcherDesigner._counter}"
         FormSearcherDesigner._counter += 1
         self.model = model
@@ -144,7 +188,7 @@ class FormSearcherDesigner:
         self.__create_ui()
 
     def __create_ui(self):
-        with dpg.window(tag=self._window_id, label="Buscar Paciente", autosize=True, no_collapse=True):
+        with dpg.window(tag=self._window_id, label=self._title, autosize=True, no_collapse=True):
             for f in fields(self.model):
                 if all(key in f.metadata for key in self.designer_fields):
                     if f.metadata[SEARCHABLE] == True:
