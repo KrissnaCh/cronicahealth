@@ -13,6 +13,7 @@ class SQLiteFieldConstraint(Flag):
 
 
 class InputWidgetType(Enum):
+    MODEL=auto()
     INPUT_TEXT = auto()
     INPUT_INT = auto()
     INPUT_FLOAT = auto()
@@ -39,6 +40,9 @@ ITEMS = "designer_items"
 SEARCHABLE = "designer_searchable"
 """ Permitir que el campo sea parte de un formulario de búsqueda """
 
+SHOWINTABLE = "designer_showintable"
+"""Permitir que la propiedad se muestre en el dataTable"""
+
 SQLITE_FLAGS = "sqlite_flags"
 """ Metadatos para restricciones de SQLite, como PRIMARY_KEY, AUTOINCREMENT, UNIQUE, NOT_NULL """
 
@@ -53,7 +57,7 @@ def flags(*, default,
           readonly: bool = False,
           required: bool = False,
           items: Optional[list] = None,
-          searchable: bool = False):
+          searchable: bool = False, showintable:bool = True):
     """
     Decorador para definir metadatos de diseño para campos de dataclass.
 
@@ -75,6 +79,7 @@ def flags(*, default,
             READONLY: readonly,
             REQUIRED: required,
             ITEMS: items or [],
-            SEARCHABLE: searchable
+            SEARCHABLE: searchable,
+            SHOWINTABLE:showintable
         }
     )
