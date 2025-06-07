@@ -3,15 +3,24 @@ from datetime import date
 from enum import Enum, auto
 from typing import Union
 import dearpygui.dearpygui as dpg
-from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, TITLE, ControlID, Empty, InputWidgetType
+from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE, TITLE, ControlID, Empty, InputWidgetType
 from internal.ext import align_items
 
 window_count = 0
 window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
-window_spacing = 50 # distancia vertical entre ventanas
+window_spacing = 50  # distancia vertical entre ventanas
+
+
+class SearcherFlag(Enum):
+    UPDATE = auto()
+    DELETE = auto()
+    CONSULT = auto()
+
 
 class FormDetailDesigner:
+    attrs: dict[str, ControlID] = {}
+
     def show(self):
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
@@ -64,8 +73,8 @@ class FormDetailDesigner:
         x_pos = window_base_x + window_count * window_spacing
         """Crea la interfaz de usuario del formulario de detalle."""
         # Genera un ID único para la ventana
-        
-        with dpg.window(label=self._title, autosize=True,pos=(x_pos, y_pos), no_collapse=True, show=False) as self._window_id:
+
+        with dpg.window(label=self._title, autosize=True, pos=(x_pos, y_pos), no_collapse=True, show=False) as self._window_id:
             # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
             just = max((len(f.metadata[TITLE]) for f in fields(self.model)
                         if all(key in f.metadata for key in self.designer_fields)), default=0)
@@ -73,23 +82,41 @@ class FormDetailDesigner:
                 if all(key in f.metadata for key in self.designer_fields):
                     match f.metadata[CONTROL]:
                         case InputWidgetType.INPUT_INT:
-                            self.builder.add_input_int(self.mark_required(
-                                f.metadata[TITLE],  f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name),  f.metadata[READONLY])
-                            pass
+                            self.attrs[f.name] = self.builder.add_input_int(
+                                self.mark_required(
+                                    f.metadata[TITLE],  f.metadata[REQUIRED]).ljust(just),
+                                getattr(self.model, f.name),
+                                f.metadata[READONLY]
+                            )
                         case InputWidgetType.INPUT_TEXT:
-                            self.builder.add_input_text(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name), f.metadata[READONLY])
-                            pass
+                            self.attrs[f.name] = self.builder.add_input_text(
+                                self.mark_required(
+                                    f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
+                                getattr(self.model, f.name),
+                                f.metadata[READONLY]
+                            )
                         case InputWidgetType.INPUT_FLOAT:
-                            self.builder.add_input_float(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name), f.metadata[READONLY])
-                            pass
+                            self.attrs[f.name] = self.builder.add_input_float(
+                                self.mark_required(
+                                    f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
+                                getattr(self.model, f.name),
+                                f.metadata[READONLY]
+                            )
                         case InputWidgetType.DATE_PICKER:
-                            self.builder.add_date_picker(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), getattr(self.model, f.name), f.metadata[READONLY])
+                            self.attrs[f.name] = self.builder.add_date_picker(
+                                self.mark_required(
+                                    f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
+                                getattr(self.model, f.name),
+                                f.metadata[READONLY]
+                            )
                         case InputWidgetType.COMBO:
-                            self.builder.add_combo(self.mark_required(
-                                f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just), f.metadata[ITEMS], getattr(self.model, f.name), f.metadata[READONLY])
+                            self.attrs[f.name] = self.builder.add_combo(
+                                self.mark_required(
+                                    f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
+                                f.metadata[ITEMS],
+                                getattr(self.model, f.name),
+                                f.metadata[READONLY]
+                            )
                         case _:
                             pass
 
@@ -224,21 +251,34 @@ class DesignerBuilder:
             return self.add_input_text(label, default_date.strftime("%d/%m/%Y") if default_date else "", readonly)
 
 
-class SearcherFlag(Enum):
-    UPDATE = auto()
-    DELETE = auto()
-    CONSULT = auto()
-
-
 class FormSearcherDesigner:
+    ids_table: dict[int | str, list] = {}
+
+    def __row_clicked(self, sender,  value, user_data):
+        """Maneja el evento de selección de una fila en la tabla."""
+        if value:
+            rowid, _ = user_data
+            for rid, selectables in self.ids_table.items():
+                if rid != rowid:
+                    for selectable in selectables:
+                        dpg.set_value(selectable, False)
+
     def show(self):
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
-        for i in range(0, 4):
-            with dpg.table_row(parent=self._table_id):
-                for f in fields(self.model):
-                    if all(key in f.metadata for key in self.designer_fields):
-                        dpg.add_text(f"")
+        num_columns = sum(
+            1 for f in fields(self.model)
+            if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
+        )
+        
+        for i in range(20000):
+            with dpg.table_row(parent=self._table_id) as rowid:
+                self.ids_table[rowid] = []
+                for col in range(num_columns):
+                    selectable = dpg.add_selectable(
+                        label=str(col), span_columns=True, callback=self.__row_clicked)
+                    dpg.set_item_user_data(selectable, (rowid, selectable))
+                    self.ids_table[rowid].append(selectable)
 
     def __init__(self, model, title: str, flag: SearcherFlag = SearcherFlag.CONSULT):
         """Inicializa el diseñador de formularios de detalle.
@@ -258,14 +298,13 @@ class FormSearcherDesigner:
         self.model = model
         self._title = title
         self.designer_fields = [CONTROL, TITLE,
-                                READONLY, ITEMS, SEARCHABLE]
+                                READONLY, ITEMS, SEARCHABLE, SHOWINTABLE]
 
         self.flag = flag
         """Tipo de acciones que se pueden realizar en el formulario, por ejemplo: Actualizar, Eliminar, Consultar"""
 
         self.model_type = type(model)
         self.builder = DesignerBuilder()
-
         self.__create_ui()
 
     def __create_ui(self):
@@ -274,7 +313,7 @@ class FormSearcherDesigner:
         x_pos = window_base_x + window_count * window_spacing
         """Crea la interfaz de usuario del formulario de detalle."""
         # Genera un ID único para la ventana
-        with dpg.window(label=self._title, autosize=True,pos=(x_pos, y_pos), no_collapse=True, show=False) as self._window_id:
+        with dpg.window(label=self._title, max_size=(-1, int((dpg.get_viewport_height()/2)-200)), autosize=True, pos=(x_pos, y_pos), no_collapse=True, show=False) as self._window_id:
             # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
             just = max((len(f.metadata[TITLE]) for f in fields(self.model)
                         if all(key in f.metadata for key in self.designer_fields)), default=0)
@@ -304,10 +343,18 @@ class FormSearcherDesigner:
                         case _:
                             pass
             dpg.add_separator()
-            with dpg.table()as self._table_id:
-                for f in fields(self.model):
-                    if all(key in f.metadata for key in self.designer_fields):
-                        dpg.add_table_column(label=f.metadata[TITLE])
+            with dpg.table(
+                    row_background=True,
+                    policy=dpg.mvTable_SizingFixedFit,
+                    borders_innerH=True, borders_outerH=True, borders_innerV=True,
+                    borders_outerV=True,
+                    clipper=True
+            ) as self._table_id:
+                columns = [
+                    f for f in fields(self.model)
+                    if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
+                ]
+                for f in columns:
+                    dpg.add_table_column(label=f.metadata[TITLE])
         window_count = (window_count + 1) % 10
         pass
-

@@ -57,7 +57,7 @@ class InformacionGeneralPaciente:
                     sqlite=SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE,
                     tcontrol=InputWidgetType.INPUT_INT,
                     title="Codigo",
-                    readonly=True)
+                    readonly=True, showintable=False)
 
     nombre_completo: Optional[str] = flags(default=None,
                                            sqlite=SQLiteFieldConstraint.NONE,
@@ -67,7 +67,7 @@ class InformacionGeneralPaciente:
     fecha_nacimiento: Optional[date] = flags(default=None,
                                              sqlite=SQLiteFieldConstraint.NONE,
                                              tcontrol=InputWidgetType.DATE_PICKER,
-                                             title="Fecha de Nacimiento")
+                                             title="Fecha de Nacimiento", showintable=False)
 
     edad: Optional[int] = flags(default=None,
                                 sqlite=SQLiteFieldConstraint.NONE,
@@ -88,7 +88,7 @@ class InformacionGeneralPaciente:
     direccion: Optional[str] = flags(default=None, sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
                                      title="Direccion",
-                                     required=False,)
+                                     required=False,showintable= False)
 
     telefono: Optional[str] = flags(default=None,
                                     sqlite=SQLiteFieldConstraint.NONE,
@@ -100,7 +100,7 @@ class InformacionGeneralPaciente:
                                  sqlite=SQLiteFieldConstraint.NONE,
                                  tcontrol=InputWidgetType.INPUT_TEXT,
                                  title="Email",
-                                 required=False)
+                                 required=False, showintable=False)
 
     estado_civil: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
@@ -111,13 +111,13 @@ class InformacionGeneralPaciente:
                                             "Casado",
                                             "Divorciado",
                                             "Viudo",
-                                            "Otro"])
+                                            "Otro"],showintable=False)
 
     ocupacion: Optional[str] = flags(default=None,
                                      sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
                                      title="Ocupacion",
-                                     required=False)
+                                     required=False, showintable=False)
 
 
 @dataclass

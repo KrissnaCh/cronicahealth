@@ -14,25 +14,30 @@ class Application:
         print(f"Menu Item: {sender}")
 
     def __callback_patient_insert(self, sender):
-        patieninfo = InformacionGeneralPaciente()
-        dlg = FormDetailDesigner(patieninfo,
-                                 "Insertar Paciente",save_callback=self.__patient_save
-                                 )
+        dlg = FormDetailDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Paciente",
+            save_callback=self.__patient_save,
+        )
         dlg.show()
 
         pass
 
     def __callback_patient_update(self, sender):
-        dlg = FormSearcherDesigner(InformacionGeneralPaciente(),
-                                 "Actualizar Paciente",flag=SearcherFlag.UPDATE
-                                 )
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Actualizar Paciente",
+            flag=SearcherFlag.UPDATE
+        )
         dlg.show()
         pass
 
     def __callback_patient_delete(self, sender):
-        dlg = FormSearcherDesigner(InformacionGeneralPaciente(),
-                                 "Actualizar Paciente",flag=SearcherFlag.DELETE
-                                 )
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Actualizar Paciente",
+            flag=SearcherFlag.DELETE
+        )
         dlg.show()
         pass
 
