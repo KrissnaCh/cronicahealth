@@ -8,10 +8,13 @@ from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
 
 class Application:
     def __patient_save(self, old, new):
+
+        print(f"Old: {old}")
+        print(f"New: {new}")
+        
         pass
 
-    def print_me(self, sender):
-        print(f"Menu Item: {sender}")
+    
 
     def __callback_patient_insert(self, sender):
         dlg = FormDetailDesigner(

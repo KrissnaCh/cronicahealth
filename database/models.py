@@ -55,33 +55,38 @@ class InformacionGeneralPaciente:
     """
     id: int = flags(default=0,
                     sqlite=SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE,
-                    tcontrol=InputWidgetType.INPUT_INT,
+                    tcontrol=InputWidgetType.NONE,
                     title="Codigo",
                     readonly=True, showintable=False)
 
     nombre_completo: Optional[str] = flags(default=None,
                                            sqlite=SQLiteFieldConstraint.NONE,
                                            tcontrol=InputWidgetType.INPUT_TEXT,
+                                           required=True,
                                            title="Nombre Completo")
 
     fecha_nacimiento: Optional[date] = flags(default=None,
                                              sqlite=SQLiteFieldConstraint.NONE,
+                                             required=True,
                                              tcontrol=InputWidgetType.DATE_PICKER,
                                              title="Fecha de Nacimiento", showintable=False)
 
     edad: Optional[int] = flags(default=None,
                                 sqlite=SQLiteFieldConstraint.NONE,
+                                required=True,
                                 tcontrol=InputWidgetType.INPUT_INT,
                                 title="Edad")
 
     genero: Optional[str] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.COMBO,
+                                  required=True,
                                   title="Genero",
                                   items=["Masculino", "Femenino"])
 
     cedula: Optional[str] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
+                                  required=True,
                                   tcontrol=InputWidgetType.INPUT_TEXT,
                                   title="Cedula")
 
