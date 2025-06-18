@@ -3,6 +3,7 @@ from datetime import date
 import dearpygui.dearpygui as dpg
 
 from database.models import InformacionGeneralPaciente
+from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
 
 
@@ -11,10 +12,8 @@ class Application:
 
         print(f"Old: {old}")
         print(f"New: {new}")
-        
-        pass
 
-    
+        pass
 
     def __callback_patient_insert(self, sender):
         dlg = FormDetailDesigner(
@@ -24,7 +23,6 @@ class Application:
         )
         dlg.show()
 
-        pass
 
     def __callback_patient_update(self, sender):
         dlg = FormSearcherDesigner(
@@ -45,6 +43,12 @@ class Application:
         pass
 
     def __callback_show_info(self, sender):
+        message.show(
+            title="Informacion",
+            message="Esta aplicacion es un sistema de gestion de citas medicas.",
+            buttons=message.MessageBoxButtons.OK,
+            on_close=lambda result: print(f"Dialog closed with result: {result}")
+        )
         pass
 
     def __callback_MedicalConsultation_new(self, sender):
@@ -89,6 +93,7 @@ class Application:
                               callback=self.__callback_show_info)
 
     def run(self):
+        dpg.configure_app(docking=True, docking_space=True)
         dpg.set_global_font_scale(0.5)
         dpg.setup_dearpygui()
         dpg.show_viewport(maximized=True)

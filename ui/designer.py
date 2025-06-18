@@ -6,7 +6,8 @@ import dearpygui.dearpygui as dpg
 from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE, TITLE, ControlID, Empty, InputWidgetType
 from internal.ext import align_items
 import copy
-
+import ui.message as msgbox
+from ui.message import DialogResult,MessageBoxButtons
 window_count = 0
 window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
@@ -21,6 +22,7 @@ class SearcherFlag(Enum):
 
 class FormDetailDesigner:
     attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
+    attrs_required: list[str] = []
 
     def __model_callback(self, sender):
         user_data = dpg.get_item_user_data(sender)
@@ -39,31 +41,44 @@ class FormDetailDesigner:
                 "No se proporcionó un modelo."
             )
 
+    def __validator(self):
+        """Valida los campos requeridos del formulario."""
+        for key in self.attrs_required:
+            if key not in self.attrs:
+                raise ValueError(f"El campo '{key}' es requerido pero no está presente en el formulario.")
+            value = dpg.get_value(self.attrs[key][0][1])
+            if not value:
+                raise ValueError(f"El campo '{key}' es requerido y no puede estar vacío.")
+        return True
     def __btn_callback(self, sender):
         """Maneja el evento de clic en los botones del formulario."""
         user_data = dpg.get_item_user_data(sender)
+        try:
+            self.__validator()
+            if user_data:
+                old_model = copy.deepcopy(self.model)
+                # Actualiza el modelo con los valores de los controles
+                for key, (id, typ) in self.attrs.items():
+                    if typ == InputWidgetType.DATE_PICKER:
+                        # Si el tipo es un selector de fecha, convierte el valor a un objeto date
+                        # y actualiza el modelo
+                        date_value = dpg.get_value(id[1])
+                        if date_value:
+                            setattr(self.model, key, date(
+                                year=date_value['year'] + 1900,
+                                month=date_value['month'] + 1,
+                                day=date_value['month_day']
+                            ))
+                        else:
+                            setattr(self.model, key, dpg.get_value(id[1]))
 
-        if user_data:
-            old_model = copy.deepcopy(self.model)
-            # Actualiza el modelo con los valores de los controles
-            for key, (id, typ) in self.attrs.items():
-                if typ == InputWidgetType.DATE_PICKER:
-                    # Si el tipo es un selector de fecha, convierte el valor a un objeto date
-                    # y actualiza el modelo
-                    date_value = dpg.get_value(id[1])
-                    if date_value:
-                        setattr(self.model, key, date(
-                            year=date_value['year'] + 1900,
-                            month=date_value['month'] + 1,
-                            day=date_value['month_day']
-                        ))
-                    else:
-                        setattr(self.model, key, dpg.get_value(id[1]))
+                user_data(old_model, self.model)
 
-            user_data(old_model, self.model)
-
-        if self._closeonexec:
-            dpg.delete_item(self._window_id)
+            if self._closeonexec:
+                dpg.delete_item(self._window_id)
+        except ValueError as e:
+            msgbox.show("Error", str(e), MessageBoxButtons.CANCEL_TRY_CONTINUE, on_close=None)
+            pass
 
     def show(self):
         """Muestra la ventana del formulario de detalle."""
@@ -184,6 +199,8 @@ class FormDetailDesigner:
                                 InputWidgetType.MODEL)
                         case _:
                             pass
+                    if f.metadata[REQUIRED] == True:
+                        self.attrs_required.append(f.name)
 
             count_callbacks = sum(
                 cb is not None for cb in [
