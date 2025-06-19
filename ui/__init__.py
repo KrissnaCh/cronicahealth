@@ -5,21 +5,16 @@ import dearpygui.dearpygui as dpg
 from database.models import InformacionGeneralPaciente
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
+from ui.events_application import DbEventPatient
 
 
 class Application:
-    def __patient_save(self, old, new):
-
-        print(f"Old: {old}")
-        print(f"New: {new}")
-
-        pass
 
     def __callback_patient_insert(self, sender):
         dlg = FormDetailDesigner(
             InformacionGeneralPaciente(),
             "Insertar Paciente",
-            save_callback=self.__patient_save,
+            save_callback=DbEventPatient.ui_insert,
         )
         dlg.show()
 
@@ -28,7 +23,7 @@ class Application:
         dlg = FormSearcherDesigner(
             InformacionGeneralPaciente(),
             "Actualizar Paciente",
-            flag=SearcherFlag.UPDATE
+            (SearcherFlag.UPDATE,DbEventPatient.ui_update )
         )
         dlg.show()
         pass
@@ -36,8 +31,8 @@ class Application:
     def __callback_patient_delete(self, sender):
         dlg = FormSearcherDesigner(
             InformacionGeneralPaciente(),
-            "Actualizar Paciente",
-            flag=SearcherFlag.DELETE
+            "Eliminar Paciente",
+            (SearcherFlag.DELETE, DbEventPatient.ui_delete)
         )
         dlg.show()
         pass

@@ -1,13 +1,14 @@
 from dataclasses import fields, is_dataclass
 from datetime import date
 from enum import Enum, auto
-from typing import Union
+import gc
+from typing import Callable, Union
 import dearpygui.dearpygui as dpg
-from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE, TITLE, ControlID, Empty, InputWidgetType
+from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE, TITLE, ActionDesigner, ControlID, Empty, InputWidgetType, is_empty_or_whitespace
 from internal.ext import align_items
 import copy
 import ui.message as msgbox
-from ui.message import DialogResult,MessageBoxButtons
+from ui.message import DialogResult, MessageBoxButtons
 window_count = 0
 window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
@@ -21,18 +22,17 @@ class SearcherFlag(Enum):
 
 
 class FormDetailDesigner:
-    attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
-    attrs_required: list[str] = []
 
+    # en revision
     def __model_callback(self, sender):
         user_data = dpg.get_item_user_data(sender)
         if user_data:
             frm = FormDetailDesigner(
                 user_data[1],
                 f"Editar {user_data[0]}",
-                save_callback=self.__btn_callback,
-                update_callback=self.__btn_callback,
-                delete_callback=self.__btn_callback,
+                # save_callback=self.__btn_callback,
+                # update_callback=self.__btn_callback,
+                # delete_callback=self.__btn_callback,
                 closeonexec=True
             )
             frm.show()
@@ -41,27 +41,27 @@ class FormDetailDesigner:
                 "No se proporcionó un modelo."
             )
 
-    def __validator(self):
-        """Valida los campos requeridos del formulario."""
-        for key in self.attrs_required:
-            if key not in self.attrs:
-                raise ValueError(f"El campo '{key}' es requerido pero no está presente en el formulario.")
-            value = dpg.get_value(self.attrs[key][0][1])
-            if not value:
-                raise ValueError(f"El campo '{key}' es requerido y no puede estar vacío.")
-        return True
     def __btn_callback(self, sender):
         """Maneja el evento de clic en los botones del formulario."""
         user_data = dpg.get_item_user_data(sender)
         try:
-            self.__validator()
+            self.missing_fields = Empty
+            for key in self.attrs_required:
+                value = dpg.get_value(self.attrs[key][0][0])
+
+                # incluir validador para tipo de datos mejor
+                if value and is_empty_or_whitespace(str(dpg.get_value(self.attrs[key][0][1]))):
+                    self.missing_fields += f" - {value.replace('*', '').strip()}\n"
+            if self.missing_fields:
+                raise ValueError(
+                    f"Los siguientes campos requeridos están vacíos o ausentes: \n\n{self.missing_fields}\n"
+                )
+
             if user_data:
                 old_model = copy.deepcopy(self.model)
                 # Actualiza el modelo con los valores de los controles
                 for key, (id, typ) in self.attrs.items():
                     if typ == InputWidgetType.DATE_PICKER:
-                        # Si el tipo es un selector de fecha, convierte el valor a un objeto date
-                        # y actualiza el modelo
                         date_value = dpg.get_value(id[1])
                         if date_value:
                             setattr(self.model, key, date(
@@ -69,22 +69,21 @@ class FormDetailDesigner:
                                 month=date_value['month'] + 1,
                                 day=date_value['month_day']
                             ))
-                        else:
-                            setattr(self.model, key, dpg.get_value(id[1]))
-
+                    else:
+                        setattr(self.model, key, dpg.get_value(id[1]))
                 user_data(old_model, self.model)
 
             if self._closeonexec:
                 dpg.delete_item(self._window_id)
         except ValueError as e:
-            msgbox.show("Error", str(e), MessageBoxButtons.CANCEL_TRY_CONTINUE, on_close=None)
+            msgbox.show("Error", str(e), MessageBoxButtons.OK, on_close=None)
             pass
 
     def show(self):
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
 
-    def __init__(self, model, title: str, save_callback=None, update_callback=None, delete_callback=None, closeonexec=True):
+    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -113,6 +112,9 @@ class FormDetailDesigner:
         self.model_type = type(model)
         self.builder = DesignerBuilder()
 
+        self.attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
+        self.attrs_required: list[str] = []
+        self.missing_fields = Empty
         self.__create_ui()
 
     def mark_required(self, value, required) -> str:
@@ -369,7 +371,7 @@ class FormSearcherDesigner:
                     dpg.set_item_user_data(selectable, (rowid, selectable))
                     self.ids_table[rowid].append(selectable)
 
-    def __init__(self, model, title: str, flag: SearcherFlag = SearcherFlag.CONSULT):
+    def __init__(self, model, title: str, args: tuple[SearcherFlag, ActionDesigner]):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -389,7 +391,7 @@ class FormSearcherDesigner:
         self.designer_fields = [CONTROL, TITLE,
                                 READONLY, ITEMS, SEARCHABLE, SHOWINTABLE]
 
-        self.flag = flag
+        self.args = args
         """Tipo de acciones que se pueden realizar en el formulario, por ejemplo: Actualizar, Eliminar, Consultar"""
 
         self.model_type = type(model)

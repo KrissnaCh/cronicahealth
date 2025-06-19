@@ -2,8 +2,10 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Optional
 import sqlite3
-from database.crud import SQLiteFieldConstraint, create_table_sql
-from internal import Empty, InputWidgetType, flags
+
+from database.crud import create_table_sql
+from internal import Empty, InputWidgetType, SQLiteFieldConstraint, flags
+
 
 
 @dataclass

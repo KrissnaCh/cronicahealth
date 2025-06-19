@@ -35,4 +35,4 @@ def align_items(n_cols_left: int, n_cols_right: int) -> int | str: # type: ignor
         yield widget  # type: ignore
     finally:
         return dpg.pop_container_stack()
-    
+

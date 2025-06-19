@@ -1,8 +1,10 @@
 from dataclasses import MISSING, Field, field
 from enum import Enum, Flag, auto
-from typing import Optional
+from typing import Callable, Optional, TypeAlias
 
-ControlID = tuple[(int | str), (int | str)]
+ControlID:TypeAlias = tuple[(int | str), (int | str)]
+
+ActionDesigner:TypeAlias = Optional[Callable[[object, object],None]]
 
 class SQLiteFieldConstraint(Flag):
     PRIMARY_KEY = auto()
@@ -84,3 +86,6 @@ def flags(*, default,
             SHOWINTABLE:showintable
         }
     )
+
+def is_empty_or_whitespace(s):
+    return not s or s.strip() == ""

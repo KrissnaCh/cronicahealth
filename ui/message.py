@@ -149,37 +149,36 @@ def show(title: str, message: str, buttons: MessageBoxButtons, on_close: Optiona
             on_close(result)
         dpg.delete_item(modal_id)  # Cierra el modal al hacer clic en un botón
 
+     # Determine button labels and widths before creating the window
+    match buttons:
+        case MessageBoxButtons.ABORT_RETRY_IGNORE:
+            labels = [ButtonText.ABORT, ButtonText.RETRY, ButtonText.IGNORE]
+        case MessageBoxButtons.CANCEL_TRY_CONTINUE:
+            labels = [ButtonText.CANCEL, ButtonText.TRY_AGAIN, ButtonText.CONTINUE]
+        case MessageBoxButtons.OK:
+            labels = [ButtonText.OK]
+        case MessageBoxButtons.OK_CANCEL:
+            labels = [ButtonText.OK, ButtonText.CANCEL]
+        case MessageBoxButtons.RETRY_CANCEL:
+            labels = [ButtonText.RETRY, ButtonText.CANCEL]
+        case MessageBoxButtons.YES_NO:
+            labels = [ButtonText.YES, ButtonText.NO]
+        case MessageBoxButtons.YES_NO_CANCEL:
+            labels = [ButtonText.YES, ButtonText.NO, ButtonText.CANCEL]
+        case _:
+            labels = [ButtonText.OK]
+
+    btn_width = __calculate_button_width(labels)
+
+    # Suponga que el espacio entre los botones es de 8 px (predeterminado en DPG)
+    total_buttons_width = btn_width * len(labels) + 8 * (len(labels) - 1) if len(labels) > 1 else btn_width
+    
     with dpg.mutex():
 
         viewport_width = dpg.get_viewport_client_width()
         viewport_height = dpg.get_viewport_client_height()
 
-        # Determine button labels and widths before creating the window
-        match buttons:
-            case MessageBoxButtons.ABORT_RETRY_IGNORE:
-                labels = [ButtonText.ABORT, ButtonText.RETRY, ButtonText.IGNORE]
-            case MessageBoxButtons.CANCEL_TRY_CONTINUE:
-                labels = [ButtonText.CANCEL, ButtonText.TRY_AGAIN, ButtonText.CONTINUE]
-            case MessageBoxButtons.OK:
-                labels = [ButtonText.OK]
-            case MessageBoxButtons.OK_CANCEL:
-                labels = [ButtonText.OK, ButtonText.CANCEL]
-            case MessageBoxButtons.RETRY_CANCEL:
-                labels = [ButtonText.RETRY, ButtonText.CANCEL]
-            case MessageBoxButtons.YES_NO:
-                labels = [ButtonText.YES, ButtonText.NO]
-            case MessageBoxButtons.YES_NO_CANCEL:
-                labels = [ButtonText.YES, ButtonText.NO, ButtonText.CANCEL]
-            case _:
-                labels = [ButtonText.OK]
-
-        btn_width = __calculate_button_width(labels)
-        
-        # Suponga que el espacio entre los botones es de 8 px (predeterminado en DPG)
-        total_buttons_width = btn_width * len(labels) + 8 * (len(labels) - 1) if len(labels) > 1 else btn_width
-        
-
-        with dpg.window(label=title, max_size=(-1,400), modal=True, no_resize=True, no_close=True) as modal_id:
+        with dpg.window(label=title, max_size=(-1,400), modal=True,pos=(viewport_width,viewport_height), no_resize=True, no_close=True) as modal_id:
             
             dpg.add_text(message, wrap=max(total_buttons_width, 400))
             
@@ -235,9 +234,12 @@ def show(title: str, message: str, buttons: MessageBoxButtons, on_close: Optiona
 
     # garantizar que estos comandos ocurran en otro marco
     # nota: Posible bug en DPG, 32 es muy rapido y no le da tiempo a calcular el tamaño de la ventana
-    dpg.split_frame()
-    width = dpg.get_item_width(modal_id)or 0
-    height = dpg.get_item_height(modal_id)or 0
-    print(width, height)
+    # detectado linux fedora 42
+    dpg.split_frame()    
+    #solucion alternativa, centrar el modal en la pantalla
+    width = max(total_buttons_width,400) # dpg.get_item_width(modal_id) or 0
+    height = dpg.get_item_height(modal_id) or 0
     dpg.set_item_pos(modal_id, [viewport_width // 2 - width // 2, viewport_height // 2 - height // 2])
     
+    
+
