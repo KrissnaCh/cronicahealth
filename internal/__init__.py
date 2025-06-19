@@ -1,5 +1,6 @@
 from dataclasses import MISSING, Field, field
 from enum import Enum, Flag, auto
+import sqlite3
 from typing import Callable, Optional, TypeAlias
 
 ControlID:TypeAlias = tuple[(int | str), (int | str)]
@@ -89,3 +90,7 @@ def flags(*, default,
 
 def is_empty_or_whitespace(s):
     return not s or s.strip() == ""
+
+sqlite_database:Optional[sqlite3.Connection] = None
+
+

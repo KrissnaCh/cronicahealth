@@ -5,6 +5,7 @@ import sqlite3
 
 from database.crud import create_table_sql
 from internal import Empty, InputWidgetType, SQLiteFieldConstraint, flags
+import internal
 
 
 
@@ -56,7 +57,7 @@ class InformacionGeneralPaciente:
     Modelo que almacena la información general del paciente.
     """
     id: int = flags(default=0,
-                    sqlite=SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.UNIQUE,
+                    sqlite=SQLiteFieldConstraint.PRIMARY_KEY |SQLiteFieldConstraint.AUTOINCREMENT | SQLiteFieldConstraint.UNIQUE,
                     tcontrol=InputWidgetType.NONE,
                     title="Codigo",
                     readonly=True, showintable=False)
@@ -375,37 +376,4 @@ class HistoriaClinica:
     profesional: Profesional = field(default_factory=Profesional)
 
 
-def make_database(path: str):
-    """
-    Crea una base de datos SQLite a partir de un conjunto de clases dataclass, 
-    generando las tablas correspondientes automáticamente.
 
-    Parámetros:
-        path (str): Ruta donde se creará o abrirá el archivo de la base de datos SQLite.
-
-    Funcionamiento:
-        - Define una lista de clases dataclass (`instances`) que representan los modelos de datos.
-        - Abre una conexión a la base de datos SQLite en la ruta especificada.
-        - Para cada clase en la lista:
-            - Se genera la sentencia SQL de creación de tabla usando `create_table_sql(instance)`.
-            - Se ejecuta la sentencia SQL para crear la tabla si no existe.
-            - Si ocurre un error durante la creación de la tabla, imprime el error y la sentencia SQL fallida para ayudar en la depuración.
-    """
-    instances = [
-        MedicalConsultation,
-        InformacionGeneralPaciente,
-        AntecedentesPersonales,
-        AntecedentesFamiliares,
-        ExamenFisicoPorSistemas,
-        ExamenFisico,
-        PlanManejo,
-        Seguimiento,
-        Profesional,
-        HistoriaClinica
-    ]
-    db: sqlite3.Connection = sqlite3.connect(path)
-    for instance in instances:
-        try:
-            db.execute(create_table_sql(instance))
-        except Exception as e:
-            print(f"{instance}: {e}")

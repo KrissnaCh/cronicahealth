@@ -1,7 +1,8 @@
 from dataclasses import field, fields, is_dataclass
 from datetime import date
 from enum import Flag, auto
-from typing import Any
+import internal
+from typing import Any, Optional
 from internal import SQLiteFieldConstraint, SQLITE_FLAGS
 
 def python_type_to_sqlite(py_type):
@@ -104,7 +105,9 @@ def to_insert_sql(instance: Any, use_reemplace:bool = False) -> str:
     values = []
 
     for f in fields(instance):
-        col_names.append(f.name)
+        isauto = SQLiteFieldConstraint.AUTOINCREMENT in f.metadata[SQLITE_FLAGS] and f.type == int
+        if (isauto == False):
+            col_names.append(f.name)
         value = getattr(instance, f.name)
         # Formatea correctamente el valor para SQL
         if isinstance(value, str):
@@ -114,6 +117,8 @@ def to_insert_sql(instance: Any, use_reemplace:bool = False) -> str:
             values.append(f"{value.strftime("%Y%m%d")}")
         elif value is None:
             values.append("NULL")
+        elif isauto:
+            continue
         else:
             values.append(str(value))
 
@@ -124,6 +129,93 @@ def to_insert_sql(instance: Any, use_reemplace:bool = False) -> str:
     else:
         return f"INSERT INTO {table_name} ({columns}) VALUES ({values_clause});"
     
+
+def to_update_sql(old: Any, new: Any) -> str:
+    """
+    Genera una sentencia UPDATE de SQLite para actualizar los valores de una fila,
+    usando los campos de 'old' como filtro (WHERE) y los de 'new' como nuevos valores (SET).
+    Ambos deben ser instancias del mismo dataclass.
+    """
+    if not (is_dataclass(old) and is_dataclass(new)):
+        raise ValueError("Both old and new must be dataclass instances.")
+    if type(old) != type(new):
+        raise ValueError("Both dataclass instances must be of the same type.")
+
+    table_name = type(old).__name__
+
+    # Construir SET con los valores de 'new'
+    set_clauses = []
+    for f in fields(new):
+        value = getattr(new, f.name)
+        value_sql = __convert_value_sqlite(value)
+        set_clauses.append(f'"{f.name}" = {value_sql}')
+    set_clause = ", ".join(set_clauses)
+
+    # Construir WHERE con los valores de 'old'
+    where_clauses = []
+    for f in fields(old):
+        value = getattr(old, f.name)
+        value_sql = __convert_value_sqlite(value)
+        where_clauses.append(f'"{f.name}" = {value_sql}')
+    where_clause = " AND ".join(where_clauses)
+
+    return f'UPDATE "{table_name}" SET {set_clause} WHERE {where_clause};'
+
+def to_delete_sql(instance: Any) -> str:
+    """
+    Genera una sentencia DELETE de SQLite a partir de una instancia de dataclass.
+    Si la tabla tiene clave primaria, usa los campos PRIMARY KEY como filtro.
+    Si no tiene clave primaria, usa todos los campos con valor
+    """
+    table_type = type(instance)
+    table_name = table_type.__name__
+    if not is_dataclass(instance):
+        raise ValueError("Input must be a dataclass instance.")
+
+    # Buscar campos PRIMARY KEY
+    pk_fields = []
+    for f in fields(table_type):
+        if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.PRIMARY_KEY in f.metadata[SQLITE_FLAGS]:
+            pk_fields.append(f)
+
+    filters = []
+
+    if pk_fields:
+        # Usar solo los campos PRIMARY KEY
+        for f in pk_fields:
+            value = getattr(instance, f.name)
+            value = __convert_value_sqlite(value)
+            
+            filters.append(f'"{f.name}" = {value}')
+            
+            
+    else:
+        # Usar todos los campos con valor distinto de None
+        for f in fields(instance):
+            value = getattr(instance, f.name)
+            value = __convert_value_sqlite(value)
+            filters.append(f'"{f.name}" = {value}')
+                
+
+    if not filters:
+        raise ValueError("No fields to filter on for DELETE statement.")
+
+    where_clause = " AND ".join(filters)
+    query = f'DELETE FROM "{table_name}" WHERE {where_clause};'
+    return query
+
+def __convert_value_sqlite(value):
+    if isinstance(value, str):
+        value = value.replace("'", "''") 
+        value = f"'{value}'"
+    elif isinstance(value, date):
+        value=f"{value.strftime("%Y%m%d")}"
+    elif value is None:
+        value= "NULL"
+    else:
+        value= str(value)
+    return value
+
 def to_select_query(instance, table_name=None, comparator="="):
     """
     Genera una consulta SELECT de SQLite utilizando los atributos con valor distinto de None de una instancia de dataclass como filtros.
@@ -158,3 +250,31 @@ def to_select_query(instance, table_name=None, comparator="="):
 
 
 
+def execute(query:str)->None:
+    if internal.sqlite_database:
+        internal.sqlite_database.execute(query)
+
+
+def make_database(instances:list):
+    """
+    Crea una base de datos SQLite a partir de un conjunto de clases dataclass, 
+    generando las tablas correspondientes automáticamente.
+
+    Parámetros:
+        instances(list): Instancias tipo dataclass que se usaran para crear las tablas de datos
+
+    Funcionamiento:
+        - Define una lista de clases dataclass (`instances`) que representan los modelos de datos.
+        - Abre una conexión a la base de datos SQLite en la ruta especificada.
+        - Para cada clase en la lista:
+            - Se genera la sentencia SQL de creación de tabla usando `create_table_sql(instance)`.
+            - Se ejecuta la sentencia SQL para crear la tabla si no existe.
+            - Si ocurre un error durante la creación de la tabla, imprime el error y la sentencia SQL fallida para ayudar en la depuración.
+    """
+    if internal.sqlite_database:
+        for instance in instances:
+            try:
+                
+                internal.sqlite_database.execute(create_table_sql(instance))
+            except Exception as e:
+                print(f"{instance}: {e}")

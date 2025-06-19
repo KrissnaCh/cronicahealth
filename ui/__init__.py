@@ -1,8 +1,11 @@
 
 from datetime import date
+import sqlite3
 import dearpygui.dearpygui as dpg
 
-from database.models import InformacionGeneralPaciente
+from database import crud
+from database.models import AntecedentesFamiliares, AntecedentesPersonales, ExamenFisico, ExamenFisicoPorSistemas, HistoriaClinica, InformacionGeneralPaciente, MedicalConsultation, PlanManejo, Profesional, Seguimiento
+import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
 from ui.events_application import DbEventPatient
@@ -18,12 +21,11 @@ class Application:
         )
         dlg.show()
 
-
     def __callback_patient_update(self, sender):
         dlg = FormSearcherDesigner(
             InformacionGeneralPaciente(),
             "Actualizar Paciente",
-            (SearcherFlag.UPDATE,DbEventPatient.ui_update )
+            (SearcherFlag.UPDATE, DbEventPatient.ui_update)
         )
         dlg.show()
         pass
@@ -42,7 +44,8 @@ class Application:
             title="Informacion",
             message="Esta aplicacion es un sistema de gestion de citas medicas.",
             buttons=message.MessageBoxButtons.OK,
-            on_close=lambda result: print(f"Dialog closed with result: {result}")
+            on_close=lambda result: print(
+                f"Dialog closed with result: {result}")
         )
         pass
 
@@ -88,6 +91,19 @@ class Application:
                               callback=self.__callback_show_info)
 
     def run(self):
+        internal.sqlite_database = sqlite3.connect("database.sqlite")
+        crud.make_database([
+            MedicalConsultation,
+            InformacionGeneralPaciente,
+            AntecedentesPersonales,
+            AntecedentesFamiliares,
+            ExamenFisicoPorSistemas,
+            ExamenFisico,
+            PlanManejo,
+            Seguimiento,
+            Profesional,
+            HistoriaClinica
+        ])
         dpg.configure_app(docking=True, docking_space=True)
         dpg.set_global_font_scale(0.5)
         dpg.setup_dearpygui()
