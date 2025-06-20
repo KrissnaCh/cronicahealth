@@ -8,7 +8,7 @@ from database.models import AntecedentesFamiliares, AntecedentesPersonales, Exam
 import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
-from ui.events_application import DbEventAntecedentesPersonales, DbBasicComand
+from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand
 
 
 class Application:
@@ -92,6 +92,46 @@ class Application:
         )
         dlg.show()
 
+    def __callback_familiar_background_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Antecedentes Familiares",
+            (SearcherFlag.INSERT, DbEventAntecedentesFamiliares.ui_insert),
+            custom_target=AntecedentesFamiliares
+        )
+        dlg.show()
+
+    def __callback_familiar_background_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Antecedentes Familiares",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target=AntecedentesFamiliares,
+            custom_show=DbEventAntecedentesFamiliares.ui_custom_show
+            
+        )
+        dlg.show()
+
+    def __callback_familiar_background_update(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Modificar Antecedentes Familiares",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target=AntecedentesFamiliares,
+            custom_show=DbEventAntecedentesFamiliares.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_familiar_background_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Consultar Antecedentes Familiares",
+            (SearcherFlag.CONSULT, None),
+            custom_target=AntecedentesFamiliares,
+            custom_show=DbEventAntecedentesFamiliares.ui_custom_show
+        )
+        dlg.show()
+
     def __callback_MedicalConsultation_new(self, sender):
         pass
 
@@ -126,6 +166,16 @@ class Application:
                                       callback=self.__callback_personal_background_update)
                     dpg.add_menu_item(label="Consultar",
                                       callback=self.__callback_personal_background_consutl)
+                    
+                with dpg.menu(label="Antecedentes Familiares"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_familiar_background_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_familiar_background_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_familiar_background_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_familiar_background_consutl)
 
             with dpg.menu(label="Consulta Medica"):
                 pass

@@ -136,7 +136,7 @@ class AntecedentesPersonales:
         default=0,
         sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
         tcontrol=InputWidgetType.NONE)
-    """ID de refrencia a Paciente"""
+    """ID de referencia a Paciente"""
     
     patologicos: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
@@ -184,7 +184,20 @@ class AntecedentesFamiliares:
     """
     Modelo para antecedentes familiares.
     """
-    familiares: Optional[str] = None
+    """
+    Modelo que almacena los antecedentes personales del paciente.
+    """
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
+
+    familiares: Optional[str] = flags(
+        default=None,
+        title="Informe:",
+        sqlite=SQLiteFieldConstraint.NONE,
+        tcontrol=InputWidgetType.INPUT_TEXT_RICH)
 
 
 @dataclass

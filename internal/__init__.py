@@ -19,6 +19,7 @@ class InputWidgetType(Enum):
     MODEL=auto()
     NONE= auto()
     INPUT_TEXT = auto()
+    INPUT_TEXT_RICH = auto()
     INPUT_INT = auto()
     INPUT_FLOAT = auto()
     COMBO = auto()

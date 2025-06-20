@@ -176,6 +176,15 @@ class FormDetailDesigner:
                                     readonly
                                 ),
                                 InputWidgetType.INPUT_TEXT)
+                        case InputWidgetType.INPUT_TEXT_RICH:
+                            self.attrs[f.name] = (
+                                self.builder.add_input_text_v2(
+                                    self.mark_required(
+                                        f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
+                                    getattr(self.model, f.name),
+                                    readonly
+                                ),
+                                InputWidgetType.INPUT_TEXT)
                         case InputWidgetType.INPUT_FLOAT:
                             self.attrs[f.name] = (
                                 self.builder.add_input_float(
@@ -266,6 +275,21 @@ class DesignerBuilder:
             id = dpg.add_text(label)
             return (id, dpg.add_input_text(
                 default_value=default_value if default_value else "", readonly=_readonly
+            ))
+        
+    def add_input_text_v2(self, label, default_value, _readonly) -> ControlID:
+        """Agrega un campo de entrada de texto al formulario.
+        Args:
+            label: El texto de la etiqueta del campo.
+            default_value: El valor predeterminado del campo.
+            _readonly: Un booleano que indica si el campo es de solo lectura.
+        Returns:
+            ControlID: Una tupla que contiene el ID del texto de la etiqueta y el ID del campo de entrada.
+        """
+        with dpg.group(horizontal=True):
+            id = dpg.add_text(label)
+            return (id, dpg.add_input_text(
+                default_value=default_value if default_value else "", readonly=_readonly, multiline=True, height=400
             ))
 
     def add_input_int(self, label, default_value, _readonly) -> ControlID:
