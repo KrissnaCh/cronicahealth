@@ -217,7 +217,7 @@ def __convert_value_sqlite(value):
         value= str(value)
     return value
 
-def to_select_query(instance, table_name=None, ignore_primary_int= False, comparator="="):
+def to_select_query(instance, table_name=None, ignore_primary_int=False, comparator="=", limit_start=None, limit_end=None):
     """
     Genera una consulta SELECT de SQLite utilizando los atributos con valor distinto de None de una instancia de dataclass como filtros.
     
@@ -225,6 +225,8 @@ def to_select_query(instance, table_name=None, ignore_primary_int= False, compar
         instance: instancia del dataclass que se usará para los valores de filtro.
         table_name: opcionalmente, permite sobrescribir el nombre de la tabla (por defecto es el nombre de la clase).
         comparator: comparador SQL a utilizar (por defecto "="). Puede personalizarse por campo si es necesario.
+        limit_start: índice inicial para LIMIT/OFFSET (opcional).
+        limit_end: cantidad de filas a devolver (opcional).
     
     Retorna:
         Una tupla con (cadena de consulta, lista de parámetros) para uso seguro con sqlite3.
@@ -254,7 +256,17 @@ def to_select_query(instance, table_name=None, ignore_primary_int= False, compar
     if filters:
         where_clause = " WHERE " + " AND ".join(filters)
 
-    query = f'SELECT * FROM "{table_name}"{where_clause};'
+    limit_clause = ""
+    # Solo agrega LIMIT si alguno de los parámetros está definido
+    if limit_start is not None and limit_end is not None:
+        limit_clause = f" LIMIT ? OFFSET ?"
+        params.extend([limit_end, limit_start])
+    elif limit_end is not None:
+        limit_clause = f" LIMIT ?"
+        params.append(limit_end)
+    # Si ambos son None, no se agrega LIMIT
+
+    query = f'SELECT * FROM "{table_name}"{where_clause}{limit_clause};'
     return query, params
 
 

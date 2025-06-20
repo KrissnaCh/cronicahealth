@@ -1,5 +1,8 @@
-from database.crud import execute, to_delete_sql, to_insert_sql, to_update_sql
+from database.crud import execute, execute_select, to_delete_sql, to_insert_sql, to_select_query, to_update_sql
 
+from database.models import AntecedentesPersonales, InformacionGeneralPaciente
+from internal import ActionDesigner
+from ui.designer import FormDetailDesigner, SearcherFlag
 import ui.message
 
 
@@ -21,14 +24,12 @@ def error(error: Exception):
     )
 
 
-class DbEventPatient(object):
+class DbBasicComand(object):
 
     @staticmethod
     def ui_insert(old, new):
         try:
-            execute(to_insert_sql(new))
             print(new)
-            print(to_insert_sql(new))
             godjob()
         except Exception as e:
             error(e)
@@ -46,8 +47,52 @@ class DbEventPatient(object):
     @staticmethod
     def ui_update(old, new):
         try:
-            execute(to_update_sql(old,new))
+            execute(to_update_sql(old, new))
             godjob()
         except Exception as e:
             error(e)
         pass
+
+
+class DbEventAntecedentesPersonales(object):
+    @staticmethod
+    def ui_insert(orig: InformacionGeneralPaciente, old: AntecedentesPersonales, new: AntecedentesPersonales):
+        try:
+            new.id = orig.id
+            execute(to_insert_sql(new))
+            godjob()
+        except Exception as e:
+            error(e)
+        pass
+
+    @staticmethod
+    def ui_custom_show(current_model: InformacionGeneralPaciente, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        foud = False
+
+        def show_data(data):
+            nonlocal foud
+            foud = True
+            match args[0]:
+                case SearcherFlag.UPDATE:
+                    FormDetailDesigner(data, title=f"Actualizar Datos de {current_model.nombre_completo}",
+                                       update_callback=args[1]).show()
+
+                case SearcherFlag.CONSULT:
+                    FormDetailDesigner(data, title=f"Consultar Datos de {current_model.nombre_completo}",
+                                       is_readonly=True).show()
+
+                case SearcherFlag.DELETE:
+                    FormDetailDesigner(
+                        data, title=f"Eliminar Datos de {current_model.nombre_completo}", delete_callback=args[1], is_readonly=True).show()
+
+        search = AntecedentesPersonales()
+        search.id = current_model.id
+        query, params = to_select_query(search, limit_end=1)
+        execute_select(AntecedentesPersonales, query, show_data, params)
+        if foud == False:
+            ui.message.show(
+                "Error",
+                f"Datos no Encontrados de \"{current_model.nombre_completo}\"",
+                ui.message.MessageBoxButtons.OK,
+                None
+            )

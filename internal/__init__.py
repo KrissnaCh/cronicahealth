@@ -5,7 +5,7 @@ from typing import Callable, Optional, TypeAlias
 
 ControlID:TypeAlias = tuple[(int | str), (int | str)]
 
-ActionDesigner:TypeAlias = Optional[Callable[[object, object],None]]
+ActionDesigner:TypeAlias = Optional[Callable]
 
 class SQLiteFieldConstraint(Flag):
     PRIMARY_KEY = auto()

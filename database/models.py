@@ -8,7 +8,6 @@ from internal import Empty, InputWidgetType, SQLiteFieldConstraint, flags
 import internal
 
 
-
 @dataclass
 class MedicalConsultation:
     """
@@ -57,7 +56,7 @@ class InformacionGeneralPaciente:
     Modelo que almacena la información general del paciente.
     """
     id: int = flags(default=0,
-                    sqlite=SQLiteFieldConstraint.PRIMARY_KEY |SQLiteFieldConstraint.AUTOINCREMENT | SQLiteFieldConstraint.UNIQUE,
+                    sqlite=SQLiteFieldConstraint.PRIMARY_KEY | SQLiteFieldConstraint.AUTOINCREMENT | SQLiteFieldConstraint.UNIQUE,
                     tcontrol=InputWidgetType.NONE,
                     title="Codigo",
                     readonly=True, showintable=False)
@@ -72,31 +71,31 @@ class InformacionGeneralPaciente:
                                              sqlite=SQLiteFieldConstraint.NONE,
                                              required=True,
                                              tcontrol=InputWidgetType.DATE_PICKER,
-                                             title="Fecha de Nacimiento", showintable=False,searchable=True)
+                                             title="Fecha de Nacimiento", showintable=False, searchable=True)
 
     edad: Optional[int] = flags(default=None,
                                 sqlite=SQLiteFieldConstraint.NONE,
                                 required=True,
                                 tcontrol=InputWidgetType.INPUT_INT,
-                                title="Edad",searchable=True)
+                                title="Edad", searchable=True)
 
     genero: Optional[str] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.COMBO,
                                   required=True,
                                   title="Genero",
-                                  items=["Masculino", "Femenino"],searchable=True)
+                                  items=["Masculino", "Femenino"], searchable=True)
 
     cedula: Optional[str] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   required=True,
                                   tcontrol=InputWidgetType.INPUT_TEXT,
-                                  title="Cedula",searchable=True)
+                                  title="Cedula", searchable=True)
 
     direccion: Optional[str] = flags(default=None, sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
                                      title="Direccion",
-                                     required=False,showintable= False)
+                                     required=False, showintable=False)
 
     telefono: Optional[str] = flags(default=None,
                                     sqlite=SQLiteFieldConstraint.NONE,
@@ -119,7 +118,7 @@ class InformacionGeneralPaciente:
                                             "Casado",
                                             "Divorciado",
                                             "Viudo",
-                                            "Otro"],showintable=False)
+                                            "Otro"], showintable=False)
 
     ocupacion: Optional[str] = flags(default=None,
                                      sqlite=SQLiteFieldConstraint.NONE,
@@ -133,6 +132,12 @@ class AntecedentesPersonales:
     """
     Modelo que almacena los antecedentes personales del paciente.
     """
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de refrencia a Paciente"""
+    
     patologicos: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
                                        tcontrol=InputWidgetType.INPUT_TEXT,
@@ -374,6 +379,3 @@ class HistoriaClinica:
     plan_manejo: PlanManejo = field(default_factory=PlanManejo)
     seguimiento: Seguimiento = field(default_factory=Seguimiento)
     profesional: Profesional = field(default_factory=Profesional)
-
-
-

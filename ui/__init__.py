@@ -8,7 +8,7 @@ from database.models import AntecedentesFamiliares, AntecedentesPersonales, Exam
 import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
-from ui.events_application import DbEventPatient
+from ui.events_application import DbEventAntecedentesPersonales, DbBasicComand
 
 
 class Application:
@@ -17,7 +17,7 @@ class Application:
         dlg = FormDetailDesigner(
             InformacionGeneralPaciente(),
             "Insertar Paciente",
-            save_callback=DbEventPatient.ui_insert,
+            save_callback=DbBasicComand.ui_insert,
         )
         dlg.show()
 
@@ -25,23 +25,22 @@ class Application:
         dlg = FormSearcherDesigner(
             InformacionGeneralPaciente(),
             "Actualizar Paciente",
-            (SearcherFlag.UPDATE, DbEventPatient.ui_update)
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update)
         )
         dlg.show()
-        
 
     def __callback_patient_delete(self, sender):
         dlg = FormSearcherDesigner(
             InformacionGeneralPaciente(),
             "Eliminar Paciente",
-            (SearcherFlag.DELETE, DbEventPatient.ui_delete)
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete)
         )
         dlg.show()
-        
+
     def __callback_patient_consult(self, sender):
         dlg = FormSearcherDesigner(
             InformacionGeneralPaciente(),
-            "Eliminar Paciente",
+            "Consultar Paciente",
             (SearcherFlag.CONSULT, None)
         )
         dlg.show()
@@ -51,10 +50,47 @@ class Application:
             title="Informacion",
             message="Esta aplicacion es un sistema de gestion de citas medicas.",
             buttons=message.MessageBoxButtons.OK,
-            on_close=lambda result: print(
-                f"Dialog closed with result: {result}")
+            on_close=None
         )
-        pass
+        
+
+    def __callback_personal_background_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Antecedentes Personales",
+            (SearcherFlag.INSERT, DbEventAntecedentesPersonales.ui_insert),
+            custom_target= AntecedentesPersonales
+        )
+        dlg.show()
+    def __callback_personal_background_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Antecedentes Personales",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target= AntecedentesPersonales,
+            custom_show=DbEventAntecedentesPersonales.ui_custom_show
+        )
+        dlg.show()
+        
+    def __callback_personal_background_update(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Actualizar Antecedentes Personales",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target= AntecedentesPersonales,
+            custom_show=DbEventAntecedentesPersonales.ui_custom_show
+        )
+        dlg.show()
+        
+    def __callback_personal_background_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Consultar Antecedentes Personales",
+            (SearcherFlag.CONSULT, None),
+            custom_target= AntecedentesPersonales,
+            custom_show=DbEventAntecedentesPersonales.ui_custom_show
+        )
+        dlg.show()
 
     def __callback_MedicalConsultation_new(self, sender):
         pass
@@ -81,12 +117,18 @@ class Application:
                                   callback=self.__callback_patient_update)
                 dpg.add_menu_item(label="Consultar",
                                   callback=self.__callback_patient_consult)
+                with dpg.menu(label="Antecedentes Personales"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_personal_background_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_personal_background_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_personal_background_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_personal_background_consutl)
 
             with dpg.menu(label="Consulta Medica"):
-                dpg.add_menu_item(
-                    label="Nueva", callback=self.__callback_MedicalConsultation_new)
-                dpg.add_menu_item(
-                    label="Historial", callback=self.__callback_MedicalConsultation_history)
+                pass
 
             with dpg.menu(label="Citas"):
                 dpg.add_menu_item(

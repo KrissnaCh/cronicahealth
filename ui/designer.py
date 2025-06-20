@@ -1,7 +1,6 @@
 from dataclasses import fields, is_dataclass
 from datetime import date
 from enum import Enum, auto
-import gc
 from typing import Callable, Optional, Union
 import dearpygui.dearpygui as dpg
 from database import crud
@@ -9,7 +8,7 @@ from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE
 from internal.ext import align_items
 import copy
 import ui.message as msgbox
-from ui.message import DialogResult, MessageBoxButtons
+from ui.message import MessageBoxButtons
 window_count = 0
 window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
@@ -17,6 +16,7 @@ window_spacing = 50  # distancia vertical entre ventanas
 
 
 class SearcherFlag(Enum):
+    INSERT= auto()
     UPDATE = auto()
     DELETE = auto()
     CONSULT = auto()
@@ -81,7 +81,10 @@ class FormDetailDesigner:
                     
                     else:
                         setattr(self.model, key, dpg.get_value(id[1]))
-                user_data(old_model, self.model)
+                if self._orig:
+                    user_data(self._orig,old_model, self.model)    
+                else:
+                    user_data(old_model, self.model)
 
             if self._closeonexec:
                 dpg.delete_item(self._window_id)
@@ -93,7 +96,7 @@ class FormDetailDesigner:
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
 
-    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True, is_readonly=False):
+    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True, is_readonly=False, orig= None):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -121,6 +124,7 @@ class FormDetailDesigner:
         self.__is_readonly = is_readonly
         self.model_type = type(model)
         self.builder = DesignerBuilder()
+        self._orig = orig
 
         self.attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
         self.attrs_required: list[str] = []
@@ -424,6 +428,8 @@ class FormSearcherDesigner:
             clone, ignore_primary_int=True, comparator="Like")
         self.__clear_table()
         crud.execute_select(self.model_type, query, self.__read_row, params)
+        dpg.delete_item(self._window_id)
+        dpg.show_item(self._window_id2)
 
     def __clear_table(self):
         self.ids_table.clear()
@@ -434,28 +440,35 @@ class FormSearcherDesigner:
                 dpg.delete_item(child)
 
     
-    def __close(self):
-        dpg.delete_item(self._window_id)
-        dpg.delete_item(self._window_id2)
+    
     
     def __show_selection(self, sender):
         if self.current_model:
-            match self.args[0]:
-                case SearcherFlag.UPDATE:
-                    FormDetailDesigner(self.current_model,title=self._title, update_callback=self.args[1]).show()
-                    pass
-                case SearcherFlag.CONSULT:
-                    FormDetailDesigner(self.current_model,title=self._title, is_readonly= True).show()
-                    pass
-                case SearcherFlag.DELETE:
-                    FormDetailDesigner(self.current_model,title=self._title, delete_callback=self.args[1], is_readonly=True).show()
-                    pass
-            self.__close()
+            if self._custom_show:
+                self._custom_show(self.current_model,self._title, self.args)
+                pass
+            else:
+                match self.args[0]:
+                    case SearcherFlag.UPDATE:
+                        
+                        FormDetailDesigner(self.current_model,title=self._title, update_callback=self.args[1]).show()
+                        
+                    case SearcherFlag.CONSULT:
+                        FormDetailDesigner(self.current_model,title=self._title, is_readonly= True).show()
+                        
+                    case SearcherFlag.DELETE:
+                        FormDetailDesigner(self.current_model,title=self._title, delete_callback=self.args[1], is_readonly=True).show()
+
+                    case SearcherFlag.INSERT:
+                        if self._custom_target:
+                            FormDetailDesigner(self._custom_target(),title=self._title, save_callback=self.args[1], is_readonly=False,orig= self.current_model).show()
+                    
+            dpg.delete_item(self._window_id2)
 
     def show(self):
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
-        dpg.show_item(self._window_id2)
+        #dpg.show_item(self._window_id2)
 
         """for i in range(20000):
             with dpg.table_row(parent=self._table_id) as rowid:
@@ -466,7 +479,7 @@ class FormSearcherDesigner:
                     dpg.set_item_user_data(selectable, (rowid, selectable))
                     self.ids_table[rowid].append(selectable)"""
 
-    def __init__(self, model, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+    def __init__(self, model, title: str, args: tuple[SearcherFlag, ActionDesigner], custom_target:Optional[type]= None, custom_show:Optional[Callable]= None):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -479,11 +492,13 @@ class FormSearcherDesigner:
             raise ValueError("entrada debe ser una instancia de dataclass.")
 
         self._window_id: Union[int, str] = 0
+        self._custom_show:Optional[Callable] = custom_show
         self._window_id: Union[int, str] = 2
         self._table_id: Union[int, str] = 0
         """ ID de la tabla para referencia futura."""
         self.model = model
         self._title = title
+        self._custom_target = custom_target
         self.designer_fields = [CONTROL, TITLE,
                                 READONLY, ITEMS, SEARCHABLE, SHOWINTABLE]
 
