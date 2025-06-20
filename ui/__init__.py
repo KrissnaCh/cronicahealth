@@ -8,7 +8,7 @@ from database.models import AntecedentesFamiliares, AntecedentesPersonales, Exam
 import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
-from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisico, DbEventExamenFisicoPorSistemas
+from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisico, DbEventExamenFisicoPorSistemas,DbSeguimiento,DbEventPlanManejo
 
 
 class Application:
@@ -210,6 +210,84 @@ class Application:
         )
         dlg.show()
 
+    def __callback_management_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Plan de Manejo",
+            (SearcherFlag.INSERT, DbEventPlanManejo.ui_insert),
+            custom_target=PlanManejo
+        )
+        dlg.show()
+
+    def __callback_management_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Plan de Manejo",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target=PlanManejo,
+            custom_show=DbEventPlanManejo.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_management_update(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Modificar Plan de Manejo",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target=PlanManejo,
+            custom_show=DbEventPlanManejo.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_management_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Consultar Plan de Manejo",
+            (SearcherFlag.CONSULT, None),
+            custom_target=PlanManejo,
+            custom_show=DbEventPlanManejo.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_tracing_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Seguimiento",
+            (SearcherFlag.INSERT, DbSeguimiento.ui_insert),
+            custom_target=Seguimiento
+        )
+        dlg.show()
+
+    def __callback_tracing_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Seguimiento",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target=Seguimiento,
+            custom_show=DbSeguimiento.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_tracing_update(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Modificar Seguimiento",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target=Seguimiento,
+            custom_show=DbSeguimiento.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_tracing_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Consultar Seguimiento",
+            (SearcherFlag.CONSULT, None),
+            custom_target=Seguimiento,
+            custom_show=DbSeguimiento.ui_custom_show
+        )
+        dlg.show()
+
     def __init__(self, cli_args: list[str]):
         dpg.create_context()
 
@@ -269,7 +347,26 @@ class Application:
                     dpg.add_menu_item(label="Consultar",
                                       callback=self.__callback_physical_examination_consutl)
 
-            
+            with dpg.menu(label="Gestion Adaptativa"):
+                with dpg.menu(label="Planes de Manejo"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_management_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_management_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_management_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_management_consutl)
+                with dpg.menu(label="Seguimiento"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_tracing_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_tracing_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_tracing_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_tracing_consutl)
+                                  
 
             dpg.add_menu_item(label="Informacion",
                               callback=self.__callback_show_info)

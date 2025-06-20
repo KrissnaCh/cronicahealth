@@ -273,7 +273,7 @@ class ExamenFisico:
         sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
         tcontrol=InputWidgetType.NONE)
     """ID de referencia a Paciente"""
-    
+
     tension: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
@@ -324,25 +324,31 @@ class PlanManejo:
     """
     Modelo para el plan de manejo clínico.
     """
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
+    
     paraclinicos: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="")
+                                        title="Paraclínicos")
 
     medicamentos: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="")
+                                        title="Medicamentos")
 
     recomendaciones: Optional[str] = flags(default=None,
                                            sqlite=SQLiteFieldConstraint.NONE,
                                            tcontrol=InputWidgetType.INPUT_TEXT,
-                                           title="")
+                                           title="Recomendaciones")
 
     remisiones: Optional[str] = flags(default=None,
                                       sqlite=SQLiteFieldConstraint.NONE,
                                       tcontrol=InputWidgetType.INPUT_TEXT,
-                                      title="")
+                                      title="Remisiones")
 
 
 @dataclass
@@ -350,15 +356,20 @@ class Seguimiento:
     """
     Modelo para el seguimiento del paciente.
     """
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
     fecha_proximo_control: Optional[date] = flags(default=None,
                                                   sqlite=SQLiteFieldConstraint.NONE,
                                                   tcontrol=InputWidgetType.DATE_PICKER,
-                                                  title="")
+                                                  title="Fecha Prox. Control")
 
     observaciones_adicionales: Optional[str] = flags(default=None,
                                                      sqlite=SQLiteFieldConstraint.NONE,
-                                                     tcontrol=InputWidgetType.INPUT_TEXT,
-                                                     title="")
+                                                     tcontrol=InputWidgetType.INPUT_TEXT_RICH,
+                                                     title="Observaciones")
 
 
 @dataclass
