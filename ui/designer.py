@@ -461,7 +461,6 @@ class FormSearcherDesigner:
         self.attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
         self.model_type = type(model)
         self.builder = DesignerBuilder()
-        self.current_model: Optional[object] = None
         self._table_show = FormTableShow(self._title, self.model,self.args, self._custom_target, self._custom_show)
 
         self.__create_ui()
@@ -536,26 +535,26 @@ class FormSearcherDesigner:
 
 class FormTableShow:
     def __show_selection(self, sender):
-        if self.current_model:
+        self.close()
+        if self._current_model:
             if self._custom_show:
-                self._custom_show(self.current_model, self._title, self._args)
+                self._custom_show(self._current_model, self._title, self._args)
                 pass
             else:
                 match self._args[0]:
                     case SearcherFlag.UPDATE:
                         FormDetailDesigner(
-                            self.current_model, title=self._title, update_callback=self._args[1]).show()
+                            self._current_model, title=self._title, update_callback=self._args[1]).show()
                     case SearcherFlag.CONSULT:
                         FormDetailDesigner(
-                            self.current_model, title=self._title, is_readonly=True).show()
+                            self._current_model, title=self._title, is_readonly=True).show()
                     case SearcherFlag.DELETE:
-                        FormDetailDesigner(self.current_model, title=self._title,
+                        FormDetailDesigner(self._current_model, title=self._title,
                                            delete_callback=self._args[1], is_readonly=True).show()
                     case SearcherFlag.INSERT:
                         if self._custom_target:
                             FormDetailDesigner(self._custom_target(
-                            ), title=self._title, save_callback=self._args[1], is_readonly=False, orig=self.current_model).show()
-            self.close()
+                            ), title=self._title, save_callback=self._args[1], is_readonly=False, orig=self._current_model).show()
     
     def __row_clicked(self, sender,  value, user_data):
         """Maneja el evento de selección de una fila en la tabla."""
@@ -565,7 +564,7 @@ class FormTableShow:
                 if rid != rowid:
                     for selectable in selectables:
                         dpg.set_value(selectable, False)
-            self.current_model = data
+            self._current_model = data
             
     def __init__(self, title, model,args: tuple[SearcherFlag, ActionDesigner], custom_target: Optional[type] = None, custom_show: Optional[Callable] = None) -> None:
         self._title = title
@@ -637,5 +636,5 @@ class FormTableShow:
         
 
     def close(self):
-        dpg.show_item(self._window_id)
+        dpg.delete_item(self._window_id)
         

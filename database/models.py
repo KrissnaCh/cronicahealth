@@ -326,7 +326,7 @@ class PlanManejo:
     """
     id: int = flags(
         default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        sqlite=SQLiteFieldConstraint.NONE,
         tcontrol=InputWidgetType.NONE)
     """ID de referencia a Paciente"""
     
@@ -358,7 +358,7 @@ class Seguimiento:
     """
     id: int = flags(
         default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        sqlite=SQLiteFieldConstraint.NONE,
         tcontrol=InputWidgetType.NONE)
     """ID de referencia a Paciente"""
     fecha_proximo_control: Optional[date] = flags(default=None,
@@ -380,7 +380,7 @@ class Profesional:
     
     id: int = flags(
         default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        sqlite=SQLiteFieldConstraint.NONE,
         tcontrol=InputWidgetType.NONE)
     """ID de referencia a Paciente"""
 
