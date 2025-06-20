@@ -25,6 +25,8 @@ def error(error: Exception):
     )
 
 
+
+
 class DbBasicComand(object):
 
     @staticmethod
@@ -230,20 +232,7 @@ class DbEventExamenFisico(object):
 
 
  
-def __ui_custom_show_selection(current_model:Any, title: str, args: tuple[SearcherFlag, ActionDesigner]):
-    match args[0]:
-            case SearcherFlag.UPDATE:
-                FormDetailDesigner(current_model, title=f"Actualizar Datos",
-                                    update_callback=args[1]).show()
 
-            case SearcherFlag.CONSULT:
-                FormDetailDesigner(current_model, title=f"Consultar Datos",
-                                    is_readonly=True).show()
-
-            case SearcherFlag.DELETE:
-                FormDetailDesigner(
-                    current_model, title=f"Eliminar Datos", delete_callback=args[1], is_readonly=True).show()
-    pass
 
 class DbSeguimiento(object):
     @staticmethod
@@ -255,11 +244,26 @@ class DbSeguimiento(object):
         except Exception as e:
             error(e)
         pass
+    @staticmethod
+    def ui_custom_show_selection(current_model:Any, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        match args[0]:
+                case SearcherFlag.UPDATE:
+                    FormDetailDesigner(current_model, title=f"Actualizar Datos",
+                                        update_callback=args[1]).show()
 
+                case SearcherFlag.CONSULT:
+                    FormDetailDesigner(current_model, title=f"Consultar Datos",
+                                        is_readonly=True).show()
+
+                case SearcherFlag.DELETE:
+                    FormDetailDesigner(
+                        current_model, title=f"Eliminar Datos", delete_callback=args[1], is_readonly=True).show()
+    pass
     @staticmethod
     def ui_custom_show(current_model: InformacionGeneralPaciente, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        global __ui_custom_show_selection
         foud = False
-        table= FormTableShow(title,Seguimiento(),args, custom_show=__ui_custom_show_selection)
+        table= FormTableShow(title,Seguimiento(),args, custom_show=DbSeguimiento.ui_custom_show_selection)
         def show_data(data):
             nonlocal foud
             foud = True
@@ -293,11 +297,26 @@ class DbEventPlanManejo(object):
             error(e)
         pass
 
+    @staticmethod
+    def ui_custom_show_selection(current_model:Any, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        match args[0]:
+                case SearcherFlag.UPDATE:
+                    FormDetailDesigner(current_model, title=f"Actualizar Datos",
+                                        update_callback=args[1]).show()
 
+                case SearcherFlag.CONSULT:
+                    FormDetailDesigner(current_model, title=f"Consultar Datos",
+                                        is_readonly=True).show()
+
+                case SearcherFlag.DELETE:
+                    FormDetailDesigner(
+                        current_model, title=f"Eliminar Datos", delete_callback=args[1], is_readonly=True).show()
+                    
     @staticmethod
     def ui_custom_show(current_model: InformacionGeneralPaciente, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        
         foud = False
-        table= FormTableShow(title,PlanManejo(),args, custom_show=__ui_custom_show_selection)
+        table= FormTableShow(title,PlanManejo(),args, custom_show=DbEventPlanManejo.ui_custom_show_selection)
         def show_data(data):
             nonlocal foud
             foud = True
@@ -321,6 +340,20 @@ class DbEventPlanManejo(object):
             table.show()
 class DbEventProfesional(object):
     @staticmethod
+    def ui_custom_show_selection(current_model:Any, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        match args[0]:
+                case SearcherFlag.UPDATE:
+                    FormDetailDesigner(current_model, title=f"Actualizar Datos",
+                                        update_callback=args[1]).show()
+
+                case SearcherFlag.CONSULT:
+                    FormDetailDesigner(current_model, title=f"Consultar Datos",
+                                        is_readonly=True).show()
+
+                case SearcherFlag.DELETE:
+                    FormDetailDesigner(
+                        current_model, title=f"Eliminar Datos", delete_callback=args[1], is_readonly=True).show()
+    @staticmethod
     def ui_insert(orig: InformacionGeneralPaciente, old: Profesional, new: Profesional):
         try:
             new.id = orig.id
@@ -332,8 +365,9 @@ class DbEventProfesional(object):
 
     @staticmethod
     def ui_custom_show(current_model: InformacionGeneralPaciente, title: str, args: tuple[SearcherFlag, ActionDesigner]):
+        global __ui_custom_show_selection
         foud = False
-        table= FormTableShow(title,Profesional(),args, custom_show=__ui_custom_show_selection)
+        table= FormTableShow(title,Profesional(),args, custom_show=DbEventProfesional.ui_custom_show_selection)
         def show_data(data):
             nonlocal foud
             foud = True
