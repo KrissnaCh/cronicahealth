@@ -27,6 +27,8 @@ class DbEventPatient(object):
     def ui_insert(old, new):
         try:
             execute(to_insert_sql(new))
+            print(new)
+            print(to_insert_sql(new))
             godjob()
         except Exception as e:
             error(e)

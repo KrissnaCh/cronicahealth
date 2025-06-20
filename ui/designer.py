@@ -2,8 +2,9 @@ from dataclasses import fields, is_dataclass
 from datetime import date
 from enum import Enum, auto
 import gc
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 import dearpygui.dearpygui as dpg
+from database import crud
 from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE, TITLE, ActionDesigner, ControlID, Empty, InputWidgetType, is_empty_or_whitespace
 from internal.ext import align_items
 import copy
@@ -64,11 +65,20 @@ class FormDetailDesigner:
                     if typ == InputWidgetType.DATE_PICKER:
                         date_value = dpg.get_value(id[1])
                         if date_value:
-                            setattr(self.model, key, date(
+                            if isinstance(date_value, str):
+                                # Parsear fecha desde string en formato dd/mm/yyyy
+                                try:
+                                    day, month, year = map(int, date_value.split("/"))
+                                    setattr(self.model, key, date(year, month, day))
+                                except Exception:
+                                    setattr(self.model, key, None)
+                            else:
+                                setattr(self.model, key, date(
                                 year=date_value['year'] + 1900,
                                 month=date_value['month'] + 1,
                                 day=date_value['month_day']
-                            ))
+                                ))
+                    
                     else:
                         setattr(self.model, key, dpg.get_value(id[1]))
                 user_data(old_model, self.model)
@@ -83,7 +93,7 @@ class FormDetailDesigner:
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
 
-    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True):
+    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True, is_readonly=False):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -108,7 +118,7 @@ class FormDetailDesigner:
 
         # Indica si se debe cerrar la ventana al ejecutar una acción.
         self._closeonexec = closeonexec
-
+        self.__is_readonly = is_readonly
         self.model_type = type(model)
         self.builder = DesignerBuilder()
 
@@ -142,6 +152,7 @@ class FormDetailDesigner:
                 if all(key in f.metadata for key in self.designer_fields)), default=0)
             for f in fields(self.model):
                 if all(key in f.metadata for key in self.designer_fields):
+                    readonly = True if self.__is_readonly else f.metadata[READONLY]
                     match f.metadata[CONTROL]:
                         case InputWidgetType.INPUT_INT:
                             self.attrs[f.name] = (
@@ -149,7 +160,7 @@ class FormDetailDesigner:
                                     self.mark_required(
                                         f.metadata[TITLE],  f.metadata[REQUIRED]).ljust(just),
                                     getattr(self.model, f.name),
-                                    f.metadata[READONLY]
+                                    readonly
                                 ),
                                 InputWidgetType.INPUT_INT)
                         case InputWidgetType.INPUT_TEXT:
@@ -158,7 +169,7 @@ class FormDetailDesigner:
                                     self.mark_required(
                                         f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
                                     getattr(self.model, f.name),
-                                    f.metadata[READONLY]
+                                    readonly
                                 ),
                                 InputWidgetType.INPUT_TEXT)
                         case InputWidgetType.INPUT_FLOAT:
@@ -167,7 +178,7 @@ class FormDetailDesigner:
                                     self.mark_required(
                                         f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
                                     getattr(self.model, f.name),
-                                    f.metadata[READONLY]
+                                    readonly
                                 ),
                                 InputWidgetType.INPUT_FLOAT)
                         case InputWidgetType.DATE_PICKER:
@@ -176,7 +187,7 @@ class FormDetailDesigner:
                                     self.mark_required(
                                         f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
                                     getattr(self.model, f.name),
-                                    f.metadata[READONLY]
+                                    readonly
                                 ),
                                 InputWidgetType.DATE_PICKER)
                         case InputWidgetType.COMBO:
@@ -186,7 +197,7 @@ class FormDetailDesigner:
                                         f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
                                     f.metadata[ITEMS],
                                     getattr(self.model, f.name),
-                                    f.metadata[READONLY]
+                                    readonly
                                 ),
                                 InputWidgetType.COMBO)
                         case InputWidgetType.MODEL:
@@ -196,7 +207,7 @@ class FormDetailDesigner:
                                         f.metadata[TITLE], f.metadata[REQUIRED]).ljust(just),
                                     self.__model_callback,
                                     (f.name, getattr(self.model, f.name)),
-                                    f.metadata[READONLY]
+                                    readonly
                                 ),
                                 InputWidgetType.MODEL)
                         case _:
@@ -341,35 +352,119 @@ class DesignerBuilder:
         else:
             return self.add_input_text(label, default_date.strftime("%d/%m/%Y") if default_date else "", readonly)
 
+    def add_date_picker_v2(self, label, default_date: date, readonly) -> ControlID:
+        """Agrega un selector de fecha al formulario.
+        Args:
+            label: El texto de la etiqueta del campo.
+            default_date: La fecha predeterminada para el selector de fecha.
+            readonly: Un booleano que indica si el campo es de solo lectura.
+        Returns:
+            ControlID: Una tupla que contiene el ID del texto de la etiqueta y el ID del selector de fecha.
+        """
+        with dpg.group(horizontal=True):
+            id = dpg.add_text(label)
+            if default_date:
+                return (id, dpg.add_input_text(
+                    default_value=default_date.strftime("%d/%m/%Y")
+                ))
+            else:
+                return (id, dpg.add_input_text())
+
 
 class FormSearcherDesigner:
-    ids_table: dict[int | str, list] = {}
 
     def __row_clicked(self, sender,  value, user_data):
         """Maneja el evento de selección de una fila en la tabla."""
         if value:
-            rowid, _ = user_data
+            rowid, data = user_data
             for rid, selectables in self.ids_table.items():
                 if rid != rowid:
                     for selectable in selectables:
                         dpg.set_value(selectable, False)
+            self.current_model = data
+
+    def __read_row(self, data):
+
+        columns = [
+            f for f in fields(self.model)
+            if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
+        ]
+        
+        with dpg.table_row(parent=self._table_id) as rowid:
+            self.ids_table[rowid] = []
+            for f in columns:
+                selectable = dpg.add_selectable(
+                    label=getattr(data, f.name),
+                    span_columns=True,
+                    callback=self.__row_clicked
+                )
+                dpg.set_item_user_data(selectable, (rowid, data))
+                self.ids_table[rowid].append(selectable)
+        pass
+
+    def __search(self):
+        clone = copy.deepcopy(self.model)
+        for key, (id, typ) in self.attrs.items():
+            if typ == InputWidgetType.DATE_PICKER:
+                date_value = dpg.get_value(id[1])
+                if date_value:
+                    setattr(clone, key, date(
+                        year=date_value['year'] + 1900,
+                        month=date_value['month'] + 1,
+                        day=date_value['month_day']
+                    ))
+            else:
+                value = dpg.get_value(id[1])
+                if isinstance(value, str):
+                    setattr(clone, key, f"%{value}%")
+                elif isinstance(value, int) or isinstance(value, float):
+                    if value > 0:
+                        setattr(clone, key, value)
+        query, params = crud.to_select_query(
+            clone, ignore_primary_int=True, comparator="Like")
+        self.__clear_table()
+        crud.execute_select(self.model_type, query, self.__read_row, params)
+
+    def __clear_table(self):
+        self.ids_table.clear()
+        children_to_delete = dpg.get_item_children(
+            self._table_id, 1)  # 1 para la ranura "children"
+        if children_to_delete:
+            for child in children_to_delete:
+                dpg.delete_item(child)
+
+    
+    def __close(self):
+        dpg.delete_item(self._window_id)
+        dpg.delete_item(self._window_id2)
+    
+    def __show_selection(self, sender):
+        if self.current_model:
+            match self.args[0]:
+                case SearcherFlag.UPDATE:
+                    FormDetailDesigner(self.current_model,title=self._title, update_callback=self.args[1]).show()
+                    pass
+                case SearcherFlag.CONSULT:
+                    FormDetailDesigner(self.current_model,title=self._title, is_readonly= True).show()
+                    pass
+                case SearcherFlag.DELETE:
+                    FormDetailDesigner(self.current_model,title=self._title, delete_callback=self.args[1], is_readonly=True).show()
+                    pass
+            self.__close()
 
     def show(self):
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
-        num_columns = sum(
-            1 for f in fields(self.model)
-            if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
-        )
+        dpg.show_item(self._window_id2)
 
-        for i in range(20000):
+        """for i in range(20000):
             with dpg.table_row(parent=self._table_id) as rowid:
                 self.ids_table[rowid] = []
                 for col in range(num_columns):
                     selectable = dpg.add_selectable(
                         label=str(col), span_columns=True, callback=self.__row_clicked)
                     dpg.set_item_user_data(selectable, (rowid, selectable))
-                    self.ids_table[rowid].append(selectable)
+                    self.ids_table[rowid].append(selectable)"""
 
     def __init__(self, model, title: str, args: tuple[SearcherFlag, ActionDesigner]):
         """Inicializa el diseñador de formularios de detalle.
@@ -384,6 +479,7 @@ class FormSearcherDesigner:
             raise ValueError("entrada debe ser una instancia de dataclass.")
 
         self._window_id: Union[int, str] = 0
+        self._window_id: Union[int, str] = 2
         self._table_id: Union[int, str] = 0
         """ ID de la tabla para referencia futura."""
         self.model = model
@@ -394,8 +490,15 @@ class FormSearcherDesigner:
         self.args = args
         """Tipo de acciones que se pueden realizar en el formulario, por ejemplo: Actualizar, Eliminar, Consultar"""
 
+        self.attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
         self.model_type = type(model)
         self.builder = DesignerBuilder()
+        self.current_model:Optional[object] = None
+        self.num_columns = sum(
+            1 for f in fields(self.model)
+            if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
+        )
+        self.ids_table: dict[int | str, list] = {}
         self.__create_ui()
 
     def __create_ui(self):
@@ -404,48 +507,79 @@ class FormSearcherDesigner:
         x_pos = window_base_x + window_count * window_spacing
         """Crea la interfaz de usuario del formulario de detalle."""
         # Genera un ID único para la ventana
-        with dpg.window(label=self._title, max_size=(-1, int((dpg.get_viewport_height()/2)-200)), autosize=True, pos=(x_pos, y_pos), no_collapse=True, show=False) as self._window_id:
-            # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
-            just = max((len(f.metadata[TITLE]) for f in fields(self.model)
-                        if all(key in f.metadata for key in self.designer_fields)), default=0)
-            for f in fields(self.model):
-                if all(key in f.metadata for key in self.designer_fields):
-                    if f.metadata[SEARCHABLE] == False:
-                        continue
-                    match f.metadata[CONTROL]:
-                        case InputWidgetType.INPUT_INT:
-                            self.builder.add_input_int(f.metadata[TITLE].ljust(
-                                just), getattr(self.model, f.name),  f.metadata[READONLY])
-                            pass
-                        case InputWidgetType.INPUT_TEXT:
-                            self.builder.add_input_text(f.metadata[TITLE].ljust(
-                                just), getattr(self.model, f.name), f.metadata[READONLY])
-                            pass
-                        case InputWidgetType.INPUT_FLOAT:
-                            self.builder.add_input_float(f.metadata[TITLE].ljust(
-                                just), getattr(self.model, f.name), f.metadata[READONLY])
-                            pass
-                        case InputWidgetType.DATE_PICKER:
-                            self.builder.add_date_picker(f.metadata[TITLE].ljust(
-                                just), getattr(self.model, f.name), f.metadata[READONLY])
-                        case InputWidgetType.COMBO:
-                            self.builder.add_combo(f.metadata[TITLE].ljust(
-                                just), f.metadata[ITEMS], getattr(self.model, f.name), f.metadata[READONLY])
-                        case _:
-                            pass
-            dpg.add_separator()
-            with dpg.table(
-                    row_background=True,
-                    policy=dpg.mvTable_SizingFixedFit,
-                    borders_innerH=True, borders_outerH=True, borders_innerV=True,
-                    borders_outerV=True,
-                    clipper=True
-            ) as self._table_id:
-                columns = [
-                    f for f in fields(self.model)
-                    if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
-                ]
-                for f in columns:
-                    dpg.add_table_column(label=f.metadata[TITLE])
+        with dpg.mutex():
+            with dpg.window(label=self._title, pos=(x_pos, y_pos), autosize=True, no_collapse=True, show=False) as self._window_id:
+                # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
+                just = max((len(f.metadata[TITLE]) for f in fields(self.model)
+                            if all(key in f.metadata for key in self.designer_fields)), default=0)
+
+                for f in fields(self.model):
+                    if all(key in f.metadata for key in self.designer_fields):
+                        if f.metadata[SEARCHABLE] == False:
+                            continue
+                        match f.metadata[CONTROL]:
+                            case InputWidgetType.INPUT_INT:
+                                self.attrs[f.name] = (
+                                    self.builder.add_input_int(
+                                        f.metadata[TITLE].ljust(just),
+                                        getattr(self.model, f.name),
+                                        False
+                                    ),
+                                    InputWidgetType.INPUT_INT)
+                            case InputWidgetType.INPUT_TEXT:
+                                self.attrs[f.name] = (
+                                    self.builder.add_input_text(
+                                        f.metadata[TITLE].ljust(just),
+                                        getattr(self.model, f.name),
+                                        False
+                                    ),
+                                    InputWidgetType.INPUT_TEXT)
+                            case InputWidgetType.INPUT_FLOAT:
+                                self.attrs[f.name] = (
+                                    self.builder.add_input_float(
+                                        f.metadata[TITLE].ljust(just),
+                                        getattr(self.model, f.name),
+                                        False
+                                    ),
+                                    InputWidgetType.INPUT_FLOAT)
+                            case InputWidgetType.DATE_PICKER:
+                                self.attrs[f.name] = (
+                                    self.builder.add_date_picker_v2(
+                                        f.metadata[TITLE].ljust(just),
+                                        getattr(self.model, f.name),
+                                        False
+                                    ),
+                                    InputWidgetType.DATE_PICKER)
+                            case InputWidgetType.COMBO:
+                                self.attrs[f.name] = (
+                                    self.builder.add_combo(
+                                        f.metadata[TITLE].ljust(just),
+                                        f.metadata[ITEMS],
+                                        getattr(self.model, f.name),
+                                        False
+                                    ),
+                                    InputWidgetType.COMBO)
+                            case _:
+                                pass
+
+                dpg.add_separator()
+                with align_items(0, 1):
+                    dpg.add_button(label="Buscar", callback=self.__search)
+
+            with dpg.window(label="Tabla de "+self._title, pos=(x_pos, y_pos), no_collapse=True, show=False)as self._window_id2:
+                dpg.add_button(label="Mostrar Seleccion", callback=self.__show_selection) # type: ignore
+                with dpg.table(
+                        row_background=True,
+                        policy=dpg.mvTable_SizingFixedFit,
+                        borders_innerH=True, borders_outerH=True, borders_innerV=True,
+                        borders_outerV=True,
+                        clipper=True
+                ) as self._table_id:
+                    columns = [
+                        f for f in fields(self.model)
+                        if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
+                    ]
+                    for f in columns:
+                        dpg.add_table_column(label=f.metadata[TITLE])
         window_count = (window_count + 1) % 10
         pass

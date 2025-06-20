@@ -91,6 +91,6 @@ def flags(*, default,
 def is_empty_or_whitespace(s):
     return not s or s.strip() == ""
 
-sqlite_database:Optional[sqlite3.Connection] = None
+
 
 

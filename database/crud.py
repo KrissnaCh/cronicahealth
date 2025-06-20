@@ -1,19 +1,20 @@
 from dataclasses import field, fields, is_dataclass
 from datetime import date
 from enum import Flag, auto
+import sqlite3
 import internal
 from typing import Any, Optional
 from internal import SQLiteFieldConstraint, SQLITE_FLAGS
 
 def python_type_to_sqlite(py_type):
-    if py_type == int:
+    if py_type == int or py_type == Optional[int]:
         return "INTEGER"
-    elif py_type == float:
+    elif py_type == float or py_type == Optional[float]:
         return "REAL"
-    elif py_type == str:
+    elif py_type == str or py_type == Optional[str]:
         return "TEXT"
-    elif py_type == date:
-        return "TEXT"  # Guardar fechas como texto
+    elif py_type == date or py_type == Optional[date]:
+        return "INTEGER"  # Guardar fechas como texto
     else:
         return "TEXT"  # Default
 
@@ -216,7 +217,7 @@ def __convert_value_sqlite(value):
         value= str(value)
     return value
 
-def to_select_query(instance, table_name=None, comparator="="):
+def to_select_query(instance, table_name=None, ignore_primary_int= False, comparator="="):
     """
     Genera una consulta SELECT de SQLite utilizando los atributos con valor distinto de None de una instancia de dataclass como filtros.
     
@@ -237,7 +238,15 @@ def to_select_query(instance, table_name=None, comparator="="):
 
     for f in fields(instance):
         value = getattr(instance, f.name)
+        # Ignore primary key fields of type int if ignore_primary_int is True
+        is_primary_int = (
+            SQLITE_FLAGS in f.metadata and
+            SQLiteFieldConstraint.PRIMARY_KEY in f.metadata[SQLITE_FLAGS] and
+            f.type == int
+        )
         if value is not None:
+            if ignore_primary_int and is_primary_int:
+                continue
             filters.append(f'"{f.name}" {comparator} ?')
             params.append(value)
 
@@ -251,9 +260,62 @@ def to_select_query(instance, table_name=None, comparator="="):
 
 
 def execute(query:str)->None:
-    if internal.sqlite_database:
-        internal.sqlite_database.execute(query)
+    sqlite_database = sqlite3.connect("database.sqlite")
+    sqlite_database.execute(query)
+    sqlite_database.commit()
+    sqlite_database.close()
+    del sqlite_database
 
+
+def execute_select(dataclass_type:type, query: str, callback, params=None):
+    """
+    Ejecuta una consulta SELECT en la base de datos SQLite y llama al callback por cada fila leída.
+
+    Args:
+        query (str): Consulta SQL SELECT a ejecutar.
+        callback (callable): Función a invocar por cada fila, recibe los valores de la fila como argumentos.
+        params (list/tuple, opcional): Parámetros para la consulta SQL (para evitar inyección SQL).
+
+    Returns:
+        None
+    """
+    conn = sqlite3.connect("database.sqlite")
+    cursor = conn.cursor()
+    if params is None:
+        cursor.execute(query)
+    else:
+        cursor.execute(query, params)
+    for row in cursor:
+        callback(__tuple_to_dataclass(dataclass_type,row))
+    cursor.close()
+    conn.close()
+
+def __tuple_to_dataclass(dataclass_type:type, data_tuple)->Any:
+    """
+    Convierte una tupla de valores en una instancia del dataclass especificado.
+    El orden de los elementos de la tupla debe coincidir con el orden de los campos del dataclass.
+
+    Args:
+        dataclass_type: Clase del dataclass destino.
+        data_tuple: Tupla con los valores.
+
+    Returns:
+        Instancia del dataclass con los valores asignados.
+    """
+    if not is_dataclass(dataclass_type):
+        raise ValueError("dataclass_type must be a dataclass.")
+    field_types = [f.type for f in fields(dataclass_type)]
+    values = []
+    for value, ftype in zip(data_tuple, field_types):
+        if ftype == date or ftype == Optional[date]:
+            # Intenta parsear fechas en formato YYYYMMDD
+            value = str(value)
+            try:
+                value = date(int(value[:4]), int(value[4:6]), int(value[6:8]))
+            except Exception:
+                pass
+        values.append(value)
+    return dataclass_type(*values)
 
 def make_database(instances:list):
     """
@@ -271,10 +333,9 @@ def make_database(instances:list):
             - Se ejecuta la sentencia SQL para crear la tabla si no existe.
             - Si ocurre un error durante la creación de la tabla, imprime el error y la sentencia SQL fallida para ayudar en la depuración.
     """
-    if internal.sqlite_database:
-        for instance in instances:
-            try:
-                
-                internal.sqlite_database.execute(create_table_sql(instance))
-            except Exception as e:
-                print(f"{instance}: {e}")
+    
+    for instance in instances:
+        try:
+            execute(create_table_sql(instance))
+        except Exception as e:
+            print(f"{instance}: {e}")

@@ -28,7 +28,7 @@ class Application:
             (SearcherFlag.UPDATE, DbEventPatient.ui_update)
         )
         dlg.show()
-        pass
+        
 
     def __callback_patient_delete(self, sender):
         dlg = FormSearcherDesigner(
@@ -37,7 +37,14 @@ class Application:
             (SearcherFlag.DELETE, DbEventPatient.ui_delete)
         )
         dlg.show()
-        pass
+        
+    def __callback_patient_consult(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Paciente",
+            (SearcherFlag.CONSULT, None)
+        )
+        dlg.show()
 
     def __callback_show_info(self, sender):
         message.show(
@@ -72,6 +79,8 @@ class Application:
                                   callback=self.__callback_patient_delete)
                 dpg.add_menu_item(label="Modificar",
                                   callback=self.__callback_patient_update)
+                dpg.add_menu_item(label="Consultar",
+                                  callback=self.__callback_patient_consult)
 
             with dpg.menu(label="Consulta Medica"):
                 dpg.add_menu_item(
@@ -91,7 +100,6 @@ class Application:
                               callback=self.__callback_show_info)
 
     def run(self):
-        internal.sqlite_database = sqlite3.connect("database.sqlite")
         crud.make_database([
             MedicalConsultation,
             InformacionGeneralPaciente,

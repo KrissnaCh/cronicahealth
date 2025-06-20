@@ -66,32 +66,32 @@ class InformacionGeneralPaciente:
                                            sqlite=SQLiteFieldConstraint.NONE,
                                            tcontrol=InputWidgetType.INPUT_TEXT,
                                            required=True,
-                                           title="Nombre Completo")
+                                           title="Nombre Completo", searchable=True)
 
     fecha_nacimiento: Optional[date] = flags(default=None,
                                              sqlite=SQLiteFieldConstraint.NONE,
                                              required=True,
                                              tcontrol=InputWidgetType.DATE_PICKER,
-                                             title="Fecha de Nacimiento", showintable=False)
+                                             title="Fecha de Nacimiento", showintable=False,searchable=True)
 
     edad: Optional[int] = flags(default=None,
                                 sqlite=SQLiteFieldConstraint.NONE,
                                 required=True,
                                 tcontrol=InputWidgetType.INPUT_INT,
-                                title="Edad")
+                                title="Edad",searchable=True)
 
     genero: Optional[str] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.COMBO,
                                   required=True,
                                   title="Genero",
-                                  items=["Masculino", "Femenino"])
+                                  items=["Masculino", "Femenino"],searchable=True)
 
     cedula: Optional[str] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   required=True,
                                   tcontrol=InputWidgetType.INPUT_TEXT,
-                                  title="Cedula")
+                                  title="Cedula",searchable=True)
 
     direccion: Optional[str] = flags(default=None, sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
