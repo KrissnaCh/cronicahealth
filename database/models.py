@@ -377,22 +377,29 @@ class Profesional:
     """
     Modelo que almacena los datos del profesional de la salud.
     """
+    
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
+
     nombre: str = flags(default=None,
                         sqlite=SQLiteFieldConstraint.NONE,
                         tcontrol=InputWidgetType.INPUT_TEXT,
-                        title="")
+                        title="Nombre", required=True)
     numero_registro: str = flags(default=None,
                                  sqlite=SQLiteFieldConstraint.NONE,
                                  tcontrol=InputWidgetType.INPUT_TEXT,
-                                 title="")
+                                 title="Numero de Registro", required=True)
     especialidad: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="")
+                                        title="", required=True)
     firma_digital: Optional[str] = flags(default=None,
                                          sqlite=SQLiteFieldConstraint.NONE,
                                          tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="")
+                                         title="",required=True)
 
 
 @dataclass

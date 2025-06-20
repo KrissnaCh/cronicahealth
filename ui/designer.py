@@ -1,7 +1,7 @@
 from dataclasses import fields, is_dataclass
 from datetime import date
 from enum import Enum, auto
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 import dearpygui.dearpygui as dpg
 from database import crud
 from internal import CONTROL, ITEMS, READONLY, REQUIRED, SEARCHABLE, SHOWINTABLE, TITLE, ActionDesigner, ControlID, Empty, InputWidgetType, is_empty_or_whitespace
@@ -16,7 +16,7 @@ window_spacing = 50  # distancia vertical entre ventanas
 
 
 class SearcherFlag(Enum):
-    INSERT= auto()
+    INSERT = auto()
     UPDATE = auto()
     DELETE = auto()
     CONSULT = auto()
@@ -68,21 +68,23 @@ class FormDetailDesigner:
                             if isinstance(date_value, str):
                                 # Parsear fecha desde string en formato dd/mm/yyyy
                                 try:
-                                    day, month, year = map(int, date_value.split("/"))
-                                    setattr(self.model, key, date(year, month, day))
+                                    day, month, year = map(
+                                        int, date_value.split("/"))
+                                    setattr(self.model, key,
+                                            date(year, month, day))
                                 except Exception:
                                     setattr(self.model, key, None)
                             else:
                                 setattr(self.model, key, date(
-                                year=date_value['year'] + 1900,
-                                month=date_value['month'] + 1,
-                                day=date_value['month_day']
+                                    year=date_value['year'] + 1900,
+                                    month=date_value['month'] + 1,
+                                    day=date_value['month_day']
                                 ))
-                    
+
                     else:
                         setattr(self.model, key, dpg.get_value(id[1]))
                 if self._orig:
-                    user_data(self._orig,old_model, self.model)    
+                    user_data(self._orig, old_model, self.model)
                 else:
                     user_data(old_model, self.model)
 
@@ -96,7 +98,7 @@ class FormDetailDesigner:
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
 
-    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True, is_readonly=False, orig= None):
+    def __init__(self, model, title: str, save_callback: ActionDesigner = None, update_callback: ActionDesigner = None, delete_callback: ActionDesigner = None, closeonexec=True, is_readonly=False, orig=None):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -276,7 +278,7 @@ class DesignerBuilder:
             return (id, dpg.add_input_text(
                 default_value=default_value if default_value else "", readonly=_readonly
             ))
-        
+
     def add_input_text_v2(self, label, default_value, _readonly) -> ControlID:
         """Agrega un campo de entrada de texto al formulario.
         Args:
@@ -401,34 +403,8 @@ class DesignerBuilder:
 
 class FormSearcherDesigner:
 
-    def __row_clicked(self, sender,  value, user_data):
-        """Maneja el evento de selección de una fila en la tabla."""
-        if value:
-            rowid, data = user_data
-            for rid, selectables in self.ids_table.items():
-                if rid != rowid:
-                    for selectable in selectables:
-                        dpg.set_value(selectable, False)
-            self.current_model = data
-
     def __read_row(self, data):
-
-        columns = [
-            f for f in fields(self.model)
-            if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
-        ]
-        
-        with dpg.table_row(parent=self._table_id) as rowid:
-            self.ids_table[rowid] = []
-            for f in columns:
-                selectable = dpg.add_selectable(
-                    label=getattr(data, f.name),
-                    span_columns=True,
-                    callback=self.__row_clicked
-                )
-                dpg.set_item_user_data(selectable, (rowid, data))
-                self.ids_table[rowid].append(selectable)
-        pass
+        self._table_show.add_row(data)
 
     def __search(self):
         clone = copy.deepcopy(self.model)
@@ -450,60 +426,18 @@ class FormSearcherDesigner:
                         setattr(clone, key, value)
         query, params = crud.to_select_query(
             clone, ignore_primary_int=True, comparator="Like")
-        self.__clear_table()
+        self._table_show.clear_table()
         crud.execute_select(self.model_type, query, self.__read_row, params)
         dpg.delete_item(self._window_id)
-        dpg.show_item(self._window_id2)
+        self._table_show.show()
 
-    def __clear_table(self):
-        self.ids_table.clear()
-        children_to_delete = dpg.get_item_children(
-            self._table_id, 1)  # 1 para la ranura "children"
-        if children_to_delete:
-            for child in children_to_delete:
-                dpg.delete_item(child)
-
-    
-    
-    
-    def __show_selection(self, sender):
-        if self.current_model:
-            if self._custom_show:
-                self._custom_show(self.current_model,self._title, self.args)
-                pass
-            else:
-                match self.args[0]:
-                    case SearcherFlag.UPDATE:
-                        
-                        FormDetailDesigner(self.current_model,title=self._title, update_callback=self.args[1]).show()
-                        
-                    case SearcherFlag.CONSULT:
-                        FormDetailDesigner(self.current_model,title=self._title, is_readonly= True).show()
-                        
-                    case SearcherFlag.DELETE:
-                        FormDetailDesigner(self.current_model,title=self._title, delete_callback=self.args[1], is_readonly=True).show()
-
-                    case SearcherFlag.INSERT:
-                        if self._custom_target:
-                            FormDetailDesigner(self._custom_target(),title=self._title, save_callback=self.args[1], is_readonly=False,orig= self.current_model).show()
-                    
-            dpg.delete_item(self._window_id2)
+   
 
     def show(self):
         """Muestra la ventana del formulario de detalle."""
         dpg.show_item(self._window_id)
-        #dpg.show_item(self._window_id2)
 
-        """for i in range(20000):
-            with dpg.table_row(parent=self._table_id) as rowid:
-                self.ids_table[rowid] = []
-                for col in range(num_columns):
-                    selectable = dpg.add_selectable(
-                        label=str(col), span_columns=True, callback=self.__row_clicked)
-                    dpg.set_item_user_data(selectable, (rowid, selectable))
-                    self.ids_table[rowid].append(selectable)"""
-
-    def __init__(self, model, title: str, args: tuple[SearcherFlag, ActionDesigner], custom_target:Optional[type]= None, custom_show:Optional[Callable]= None):
+    def __init__(self, model, title: str, args: tuple[SearcherFlag, ActionDesigner], custom_target: Optional[type] = None, custom_show: Optional[Callable] = None):
         """Inicializa el diseñador de formularios de detalle.
         Args:
             model: Una instancia de dataclass que define el modelo del formulario.
@@ -516,28 +450,20 @@ class FormSearcherDesigner:
             raise ValueError("entrada debe ser una instancia de dataclass.")
 
         self._window_id: Union[int, str] = 0
-        self._custom_show:Optional[Callable] = custom_show
-        self._window_id: Union[int, str] = 2
-        self._table_id: Union[int, str] = 0
-        """ ID de la tabla para referencia futura."""
+        self._custom_show: Optional[Callable] = custom_show
+        self._custom_target = custom_target
         self.model = model
         self._title = title
-        self._custom_target = custom_target
         self.designer_fields = [CONTROL, TITLE,
                                 READONLY, ITEMS, SEARCHABLE, SHOWINTABLE]
 
         self.args = args
-        """Tipo de acciones que se pueden realizar en el formulario, por ejemplo: Actualizar, Eliminar, Consultar"""
-
         self.attrs: dict[str, tuple[ControlID, InputWidgetType]] = {}
         self.model_type = type(model)
         self.builder = DesignerBuilder()
-        self.current_model:Optional[object] = None
-        self.num_columns = sum(
-            1 for f in fields(self.model)
-            if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
-        )
-        self.ids_table: dict[int | str, list] = {}
+        self.current_model: Optional[object] = None
+        self._table_show = FormTableShow(self._title, self.model,self.args, self._custom_target, self._custom_show)
+
         self.__create_ui()
 
     def __create_ui(self):
@@ -545,10 +471,8 @@ class FormSearcherDesigner:
         y_pos = window_base_y + window_count * window_spacing
         x_pos = window_base_x + window_count * window_spacing
         """Crea la interfaz de usuario del formulario de detalle."""
-        # Genera un ID único para la ventana
         with dpg.mutex():
             with dpg.window(label=self._title, pos=(x_pos, y_pos), autosize=True, no_collapse=True, show=False) as self._window_id:
-                # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
                 just = max((len(f.metadata[TITLE]) for f in fields(self.model)
                             if all(key in f.metadata for key in self.designer_fields)), default=0)
 
@@ -605,20 +529,113 @@ class FormSearcherDesigner:
                 with align_items(0, 1):
                     dpg.add_button(label="Buscar", callback=self.__search)
 
-            with dpg.window(label="Tabla de "+self._title, pos=(x_pos, y_pos), no_collapse=True, show=False)as self._window_id2:
-                dpg.add_button(label="Mostrar Seleccion", callback=self.__show_selection) # type: ignore
-                with dpg.table(
-                        row_background=True,
-                        policy=dpg.mvTable_SizingFixedFit,
-                        borders_innerH=True, borders_outerH=True, borders_innerV=True,
-                        borders_outerV=True,
-                        clipper=True
-                ) as self._table_id:
-                    columns = [
-                        f for f in fields(self.model)
-                        if all(key in f.metadata for key in self.designer_fields) and f.metadata[SHOWINTABLE]
-                    ]
-                    for f in columns:
-                        dpg.add_table_column(label=f.metadata[TITLE])
+
         window_count = (window_count + 1) % 10
         pass
+
+
+class FormTableShow:
+    def __show_selection(self, sender):
+        if self.current_model:
+            if self._custom_show:
+                self._custom_show(self.current_model, self._title, self._args)
+                pass
+            else:
+                match self._args[0]:
+                    case SearcherFlag.UPDATE:
+                        FormDetailDesigner(
+                            self.current_model, title=self._title, update_callback=self._args[1]).show()
+                    case SearcherFlag.CONSULT:
+                        FormDetailDesigner(
+                            self.current_model, title=self._title, is_readonly=True).show()
+                    case SearcherFlag.DELETE:
+                        FormDetailDesigner(self.current_model, title=self._title,
+                                           delete_callback=self._args[1], is_readonly=True).show()
+                    case SearcherFlag.INSERT:
+                        if self._custom_target:
+                            FormDetailDesigner(self._custom_target(
+                            ), title=self._title, save_callback=self._args[1], is_readonly=False, orig=self.current_model).show()
+            self.close()
+    
+    def __row_clicked(self, sender,  value, user_data):
+        """Maneja el evento de selección de una fila en la tabla."""
+        if value:
+            rowid, data = user_data
+            for rid, selectables in self._ids_table.items():
+                if rid != rowid:
+                    for selectable in selectables:
+                        dpg.set_value(selectable, False)
+            self.current_model = data
+            
+    def __init__(self, title, model,args: tuple[SearcherFlag, ActionDesigner], custom_target: Optional[type] = None, custom_show: Optional[Callable] = None) -> None:
+        self._title = title
+        self._model = model
+        self._custom_target= custom_target
+        self._custom_show=custom_show
+        self._args= args
+        self._designer_fields = [CONTROL, TITLE,
+                                READONLY, ITEMS, SEARCHABLE, SHOWINTABLE]
+        self._window_id:Union[int, str] = None # type: ignore
+        self._current_model: Optional[object] = None
+        self._num_columns = sum(
+            1 for f in fields(self._model)
+            if all(key in f.metadata for key in self._designer_fields) and f.metadata[SHOWINTABLE]
+        )
+        self._ids_table: dict[int | str, list] = {}
+        self.__create_ui()
+
+    def add_row(self, data:Any):
+        columns = [
+            f for f in fields(self._model)
+            if all(key in f.metadata for key in self._designer_fields) and f.metadata[SHOWINTABLE]
+        ]
+
+        with dpg.table_row(parent=self._table_id) as rowid:
+            self._ids_table[rowid] = []
+            for f in columns:
+                selectable = dpg.add_selectable(
+                    label=getattr(data, f.name),
+                    span_columns=True,
+                    callback=self.__row_clicked
+                )
+                dpg.set_item_user_data(selectable, (rowid, data))
+                self._ids_table[rowid].append(selectable)
+        pass
+
+    def clear_table(self):
+        self._ids_table.clear()
+        children_to_delete = dpg.get_item_children(
+            self._table_id, 1)  # 1 para la ranura "children"
+        if children_to_delete:
+            for child in children_to_delete:
+                dpg.delete_item(child)
+
+    def __create_ui(self):
+        global window_count
+        y_pos = window_base_y + window_count * window_spacing
+        x_pos = window_base_x + window_count * window_spacing
+        with dpg.window(label="Tabla de "+self._title, pos=(x_pos, y_pos), no_collapse=True, show=False)as self._window_id:
+            dpg.add_button(label="Mostrar Seleccion",
+                           callback=self.__show_selection) 
+            with dpg.table(
+                    row_background=True,
+                    policy=dpg.mvTable_SizingFixedFit,
+                    borders_innerH=True, borders_outerH=True, borders_innerV=True,
+                    borders_outerV=True,
+                    clipper=True
+            ) as self._table_id:
+                columns = [
+                    f for f in fields(self._model)
+                    if all(key in f.metadata for key in self._designer_fields) and f.metadata[SHOWINTABLE]
+                ]
+                for f in columns:
+                    dpg.add_table_column(label=f.metadata[TITLE])
+        pass
+
+    def show(self):
+        dpg.show_item(self._window_id)
+        
+
+    def close(self):
+        dpg.show_item(self._window_id)
+        

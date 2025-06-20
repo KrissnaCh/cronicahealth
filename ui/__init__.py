@@ -8,7 +8,7 @@ from database.models import AntecedentesFamiliares, AntecedentesPersonales, Exam
 import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
-from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisico, DbEventExamenFisicoPorSistemas,DbSeguimiento,DbEventPlanManejo
+from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisico, DbEventExamenFisicoPorSistemas, DbEventProfesional,DbSeguimiento,DbEventPlanManejo
 
 
 class Application:
@@ -288,6 +288,45 @@ class Application:
         )
         dlg.show()
 
+    def __callback_professional_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Seguimiento",
+            (SearcherFlag.INSERT, DbSeguimiento.ui_insert),
+            custom_target=Profesional
+        )
+        dlg.show()
+
+    def __callback_professional_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            Profesional(),
+            "Eliminar Profesional",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target=Profesional,
+            custom_show=DbEventProfesional.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_professional_update(self, sender):
+        dlg = FormSearcherDesigner(
+            Profesional(),
+            "Modificar Profesional",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target=Profesional,
+            custom_show=DbEventProfesional.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_professional_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            Profesional(),
+            "Consultar Profesional",
+            (SearcherFlag.CONSULT, None),
+            custom_target=Profesional,
+            custom_show=DbEventProfesional.ui_custom_show
+        )
+        dlg.show()
+
     def __init__(self, cli_args: list[str]):
         dpg.create_context()
 
@@ -366,6 +405,15 @@ class Application:
                                       callback=self.__callback_tracing_update)
                     dpg.add_menu_item(label="Consultar",
                                       callback=self.__callback_tracing_consutl)
+                with dpg.menu(label="Profecional"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_professional_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_professional_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_professional_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_professional_consutl)
                                   
 
             dpg.add_menu_item(label="Informacion",
