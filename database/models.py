@@ -267,50 +267,56 @@ class ExamenFisico:
     """
     Modelo para el examen físico general.
     """
-    signos_vitales: Optional[str] = flags(default=None,
+     
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
+    
+    tension: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
-                                          title="")
-
+                                          title="Tension Arterial")
+    
+    frecuenciac: Optional[float] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.INPUT_FLOAT,
+                                  title="Frecuencia Cardiaca")
+    
+    frecuenciar: Optional[float] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.INPUT_FLOAT,
+                                  title="Frecuencia Respiratoria")
+    
+    temp: Optional[float] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.INPUT_FLOAT,
+                                  title="Temperatura Corporal")
+    
+    satur: Optional[float] = flags(default=None,
+                                  sqlite=SQLiteFieldConstraint.NONE,
+                                  tcontrol=InputWidgetType.INPUT_FLOAT,
+                                  title="Saturacion de Oxigeno")
+    
     peso: Optional[float] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.INPUT_FLOAT,
-                                  title="")
+                                  title="Peso")
 
     talla: Optional[float] = flags(default=None,
                                    sqlite=SQLiteFieldConstraint.NONE,
                                    tcontrol=InputWidgetType.INPUT_FLOAT,
-                                   title="")
+                                   title="Talla")
 
     imc: Optional[float] = flags(default=None,
                                  sqlite=SQLiteFieldConstraint.NONE,
                                  tcontrol=InputWidgetType.INPUT_FLOAT,
-                                 title="")
-
-    cabeza_cuello: Optional[str] = flags(default=None,
-                                         sqlite=SQLiteFieldConstraint.NONE,
-                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="")
-
-    torax: Optional[str] = flags(default=None,
+                                 title="IMC")
+    observaciones: Optional[str] = flags(default=None,
                                  sqlite=SQLiteFieldConstraint.NONE,
-                                 tcontrol=InputWidgetType.INPUT_TEXT,
-                                 title="")
-
-    abdomen: Optional[str] = flags(default=None,
-                                   sqlite=SQLiteFieldConstraint.NONE,
-                                   tcontrol=InputWidgetType.INPUT_TEXT,
-                                   title="")
-
-    extremidades: Optional[str] = flags(default=None,
-                                        sqlite=SQLiteFieldConstraint.NONE,
-                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="")
-
-    neurologico: Optional[str] = flags(default=None,
-                                       sqlite=SQLiteFieldConstraint.NONE,
-                                       tcontrol=InputWidgetType.INPUT_TEXT,
-                                       title="")
+                                 tcontrol=InputWidgetType.INPUT_TEXT_RICH,
+                                 title="Observaciones")
 
 
 @dataclass

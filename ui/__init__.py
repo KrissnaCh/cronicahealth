@@ -8,7 +8,7 @@ from database.models import AntecedentesFamiliares, AntecedentesPersonales, Exam
 import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
-from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisicoPorSistemas
+from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisico, DbEventExamenFisicoPorSistemas
 
 
 class Application:
@@ -171,6 +171,45 @@ class Application:
         )
         dlg.show()
 
+    def __callback_physical_examination_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Examen Fisico",
+            (SearcherFlag.INSERT, DbEventExamenFisico.ui_insert),
+            custom_target=ExamenFisico
+        )
+        dlg.show()
+
+    def __callback_physical_examination_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Examen Fisico",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target=ExamenFisico,
+            custom_show=DbEventExamenFisico.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_physical_examination_update(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Modificar Examen Fisico",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target=ExamenFisico,
+            custom_show=DbEventExamenFisico.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_physical_examination_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Consultar Examen Fisico",
+            (SearcherFlag.CONSULT, None),
+            custom_target=ExamenFisico,
+            custom_show=DbEventExamenFisico.ui_custom_show
+        )
+        dlg.show()
+
     def __init__(self, cli_args: list[str]):
         dpg.create_context()
 
@@ -219,6 +258,16 @@ class Application:
                                       callback=self.__callback_physical_examination_by_systems_update)
                     dpg.add_menu_item(label="Consultar",
                                       callback=self.__callback_physical_examination_by_systems_consutl)
+                
+                with dpg.menu(label="Examen fisico"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_physical_examination_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_physical_examination_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_physical_examination_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_physical_examination_consutl)
 
             
 
