@@ -8,7 +8,7 @@ from database.models import AntecedentesFamiliares, AntecedentesPersonales, Exam
 import internal
 from ui import message
 from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag
-from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand
+from ui.events_application import DbEventAntecedentesFamiliares, DbEventAntecedentesPersonales, DbBasicComand, DbEventExamenFisicoPorSistemas
 
 
 class Application:
@@ -132,11 +132,44 @@ class Application:
         )
         dlg.show()
 
-    def __callback_MedicalConsultation_new(self, sender):
-        pass
+    def __callback_physical_examination_by_systems_insert(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Insertar Examen Fisico por Sistemas",
+            (SearcherFlag.INSERT, DbEventExamenFisicoPorSistemas.ui_insert),
+            custom_target=ExamenFisicoPorSistemas
+        )
+        dlg.show()
 
-    def __callback_MedicalConsultation_history(self, sender):
-        pass
+    def __callback_physical_examination_by_systems_delete(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Eliminar Examen Fisico por Sistemas",
+            (SearcherFlag.DELETE, DbBasicComand.ui_delete),
+            custom_target=ExamenFisicoPorSistemas,
+            custom_show=DbEventExamenFisicoPorSistemas.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_physical_examination_by_systems_update(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Modificar Examen Fisico por Sistemas",
+            (SearcherFlag.UPDATE, DbBasicComand.ui_update),
+            custom_target=ExamenFisicoPorSistemas,
+            custom_show=DbEventExamenFisicoPorSistemas.ui_custom_show
+        )
+        dlg.show()
+
+    def __callback_physical_examination_by_systems_consutl(self, sender):
+        dlg = FormSearcherDesigner(
+            InformacionGeneralPaciente(),
+            "Consultar Examen Fisico por Sistemas",
+            (SearcherFlag.CONSULT, None),
+            custom_target=ExamenFisicoPorSistemas,
+            custom_show=DbEventExamenFisicoPorSistemas.ui_custom_show
+        )
+        dlg.show()
 
     def __init__(self, cli_args: list[str]):
         dpg.create_context()
@@ -176,17 +209,18 @@ class Application:
                                       callback=self.__callback_familiar_background_update)
                     dpg.add_menu_item(label="Consultar",
                                       callback=self.__callback_familiar_background_consutl)
+                    
+                with dpg.menu(label="Examen fisico por Sistemas"):
+                    dpg.add_menu_item(label="Insertar",
+                                      callback=self.__callback_physical_examination_by_systems_insert)
+                    dpg.add_menu_item(label="Eliminar",
+                                      callback=self.__callback_physical_examination_by_systems_delete)
+                    dpg.add_menu_item(label="Modificar",
+                                      callback=self.__callback_physical_examination_by_systems_update)
+                    dpg.add_menu_item(label="Consultar",
+                                      callback=self.__callback_physical_examination_by_systems_consutl)
 
-            with dpg.menu(label="Consulta Medica"):
-                pass
-
-            with dpg.menu(label="Citas"):
-                dpg.add_menu_item(
-                    label="Pendientes", callback=self.__callback_MedicalConsultation_new)
-                dpg.add_menu_item(
-                    label="Completadas", callback=self.__callback_MedicalConsultation_history)
-                dpg.add_menu_item(
-                    label="Reporte General", callback=self.__callback_MedicalConsultation_history)
+            
 
             dpg.add_menu_item(label="Informacion",
                               callback=self.__callback_show_info)

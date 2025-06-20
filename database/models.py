@@ -205,55 +205,61 @@ class ExamenFisicoPorSistemas:
     """
     Modelo de revisión de síntomas por sistemas.
     """
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
+
     general: Optional[str] = flags(default=None,
                                    sqlite=SQLiteFieldConstraint.NONE,
                                    tcontrol=InputWidgetType.INPUT_TEXT,
-                                   title="")
+                                   title="General")
 
     neurologico: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                       title="")
+                                       title="Neurologico")
 
     respiratorio: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="")
+                                        title="Respiratorio")
 
     cardiovascular: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
-                                          title="")
+                                          title="Cardiovascular")
 
     gastrointestinal: Optional[str] = flags(default=None,
                                             sqlite=SQLiteFieldConstraint.NONE,
                                             tcontrol=InputWidgetType.INPUT_TEXT,
-                                            title="")
+                                            title="Gastrointestinal")
 
     genitourinario: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
-                                          title="")
+                                          title="Genitourinario")
 
     musculo_esqueletico: Optional[str] = flags(default=None,
                                                sqlite=SQLiteFieldConstraint.NONE,
                                                tcontrol=InputWidgetType.INPUT_TEXT,
-                                               title="")
+                                               title="Musculo-esqueletico")
 
     dermatologico: Optional[str] = flags(default=None,
                                          sqlite=SQLiteFieldConstraint.NONE,
                                          tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="")
+                                         title="Dermatologico")
 
     endocrino: Optional[str] = flags(default=None,
                                      sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
-                                     title="")
+                                     title="Endocrino")
 
     psiquiatrico: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="")
+                                        title="Psiquiátrico")
 
 
 @dataclass
