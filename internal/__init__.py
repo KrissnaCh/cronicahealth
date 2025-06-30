@@ -13,11 +13,13 @@ class SQLiteFieldConstraint(Flag):
     AUTOINCREMENT = auto()
     UNIQUE = auto()
     NONE = auto()
+    IGNORE = auto()
 
 
 class InputWidgetType(Enum):
     MODEL=auto()
     NONE= auto()
+    SEP= auto()
     INPUT_TEXT = auto()
     INPUT_TEXT_RICH = auto()
     INPUT_INT = auto()

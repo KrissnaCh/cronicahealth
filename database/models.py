@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import date
+from enum import auto
 from typing import Optional
 import sqlite3
 
@@ -60,7 +61,11 @@ class InformacionGeneralPaciente:
                     tcontrol=InputWidgetType.NONE,
                     title="Codigo",
                     readonly=True, showintable=False)
-
+    lb_g:int= flags(default=0,
+                                     sqlite=SQLiteFieldConstraint.IGNORE,
+                                     tcontrol=InputWidgetType.SEP,
+                                     title="Informacion General",
+                                     required=False, showintable=False)
     nombre_completo: Optional[str] = flags(default=None,
                                            sqlite=SQLiteFieldConstraint.NONE,
                                            tcontrol=InputWidgetType.INPUT_TEXT,
@@ -125,7 +130,12 @@ class InformacionGeneralPaciente:
                                      tcontrol=InputWidgetType.INPUT_TEXT,
                                      title="Ocupacion",
                                      required=False, showintable=False)
-#antecedentes personales
+    
+    lb_ap:int= flags(default=0,
+                                     sqlite=SQLiteFieldConstraint.IGNORE,
+                                     tcontrol=InputWidgetType.SEP,
+                                     title="Antecedentes Personales",
+                                     required=False, showintable=False)
     
     patologicos: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
@@ -166,15 +176,24 @@ class InformacionGeneralPaciente:
                                                      sqlite=SQLiteFieldConstraint.NONE,
                                                      tcontrol=InputWidgetType.INPUT_TEXT,
                                                      title="Hospitalizaciones Previas",showintable=False)
-    #AntecedentesFamiliares
+    lb_af:int= flags(default=0,
+                                     sqlite=SQLiteFieldConstraint.IGNORE,
+                                     tcontrol=InputWidgetType.SEP,
+                                     title="Antecedentes Familiares",
+                                     required=False, showintable=False)
+    
     familiares: Optional[str] = flags(
         default=None,
         title="Informe:",
         sqlite=SQLiteFieldConstraint.NONE,
         tcontrol=InputWidgetType.INPUT_TEXT_RICH,showintable=False)
 
+    lb_efps:int= flags(default=0,
+                                     sqlite=SQLiteFieldConstraint.IGNORE,
+                                     tcontrol=InputWidgetType.SEP,
+                                     title="Examen Fisico Por Sistemas",
+                                     required=False, showintable=False)
 
-#   ExamenFisicoPorSistemas
     general: Optional[str] = flags(default=None,
                                    sqlite=SQLiteFieldConstraint.NONE,
                                    tcontrol=InputWidgetType.INPUT_TEXT,
@@ -224,8 +243,12 @@ class InformacionGeneralPaciente:
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
                                         title="Psiquiátrico",showintable=False)
-    #examen fisico
-
+    lb_ef:int= flags(default=0,
+                                     sqlite=SQLiteFieldConstraint.IGNORE,
+                                     tcontrol=InputWidgetType.SEP,
+                                     title="Examen Fisico",
+                                     required=False, showintable=False)
+    
     tension: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
