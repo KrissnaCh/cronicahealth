@@ -125,198 +125,153 @@ class InformacionGeneralPaciente:
                                      tcontrol=InputWidgetType.INPUT_TEXT,
                                      title="Ocupacion",
                                      required=False, showintable=False)
-
-
-@dataclass
-class AntecedentesPersonales:
-    """
-    Modelo que almacena los antecedentes personales del paciente.
-    """
-    id: int = flags(
-        default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
-        tcontrol=InputWidgetType.NONE)
-    """ID de referencia a Paciente"""
+#antecedentes personales
     
     patologicos: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                       title="Patológicos")
+                                       title="Patológicos",showintable=False)
 
     quirurgicos: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                       title="Quirúrgicos")
+                                       title="Quirúrgicos",showintable=False)
 
     alergicos: Optional[str] = flags(default=None,
                                      sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
-                                     title="Alergicos")
+                                     title="Alergicos",showintable=False)
 
     traumaticos: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                       title="Traumáticos")
+                                       title="Traumáticos",showintable=False)
 
     toxicos: Optional[str] = flags(default=None,
                                    sqlite=SQLiteFieldConstraint.NONE,
                                    tcontrol=InputWidgetType.INPUT_TEXT,
-                                   title="Tóxicos")
+                                   title="Tóxicos",showintable=False)
 
     gineco_obstetricos: Optional[str] = flags(default=None,
                                               sqlite=SQLiteFieldConstraint.NONE,
                                               tcontrol=InputWidgetType.INPUT_TEXT,
-                                              title="gineco-obstétricos")
+                                              title="gineco-obstétricos",showintable=False)
 
     psiquiatricos: Optional[str] = flags(default=None,
                                          sqlite=SQLiteFieldConstraint.NONE,
                                          tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="Psiquiátricos")
+                                         title="Psiquiátricos",showintable=False)
 
     hospitalizaciones_previas: Optional[str] = flags(default=None,
                                                      sqlite=SQLiteFieldConstraint.NONE,
                                                      tcontrol=InputWidgetType.INPUT_TEXT,
-                                                     title="Hospitalizaciones Previas")
-
-
-@dataclass
-class AntecedentesFamiliares:
-    """
-    Modelo para antecedentes familiares.
-    """
-    """
-    Modelo que almacena los antecedentes personales del paciente.
-    """
-    id: int = flags(
-        default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
-        tcontrol=InputWidgetType.NONE)
-    """ID de referencia a Paciente"""
-
+                                                     title="Hospitalizaciones Previas",showintable=False)
+    #AntecedentesFamiliares
     familiares: Optional[str] = flags(
         default=None,
         title="Informe:",
         sqlite=SQLiteFieldConstraint.NONE,
-        tcontrol=InputWidgetType.INPUT_TEXT_RICH)
+        tcontrol=InputWidgetType.INPUT_TEXT_RICH,showintable=False)
 
 
-@dataclass
-class ExamenFisicoPorSistemas:
-    """
-    Modelo de revisión de síntomas por sistemas.
-    """
-    id: int = flags(
-        default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
-        tcontrol=InputWidgetType.NONE)
-    """ID de referencia a Paciente"""
-
+#   ExamenFisicoPorSistemas
     general: Optional[str] = flags(default=None,
                                    sqlite=SQLiteFieldConstraint.NONE,
                                    tcontrol=InputWidgetType.INPUT_TEXT,
-                                   title="General")
+                                   title="General",showintable=False)
 
     neurologico: Optional[str] = flags(default=None,
                                        sqlite=SQLiteFieldConstraint.NONE,
                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                       title="Neurologico")
+                                       title="Neurologico",showintable=False)
 
     respiratorio: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="Respiratorio")
+                                        title="Respiratorio",showintable=False)
 
     cardiovascular: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
-                                          title="Cardiovascular")
+                                          title="Cardiovascular",showintable=False)
 
     gastrointestinal: Optional[str] = flags(default=None,
                                             sqlite=SQLiteFieldConstraint.NONE,
                                             tcontrol=InputWidgetType.INPUT_TEXT,
-                                            title="Gastrointestinal")
+                                            title="Gastrointestinal",showintable=False)
 
     genitourinario: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
-                                          title="Genitourinario")
+                                          title="Genitourinario",showintable=False)
 
     musculo_esqueletico: Optional[str] = flags(default=None,
                                                sqlite=SQLiteFieldConstraint.NONE,
                                                tcontrol=InputWidgetType.INPUT_TEXT,
-                                               title="Musculo-esqueletico")
+                                               title="Musculo-esqueletico",showintable=False)
 
     dermatologico: Optional[str] = flags(default=None,
                                          sqlite=SQLiteFieldConstraint.NONE,
                                          tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="Dermatologico")
+                                         title="Dermatologico",showintable=False)
 
     endocrino: Optional[str] = flags(default=None,
                                      sqlite=SQLiteFieldConstraint.NONE,
                                      tcontrol=InputWidgetType.INPUT_TEXT,
-                                     title="Endocrino")
+                                     title="Endocrino",showintable=False)
 
     psiquiatrico: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="Psiquiátrico")
-
-
-@dataclass
-class ExamenFisico:
-    """
-    Modelo para el examen físico general.
-    """
-     
-    id: int = flags(
-        default=0,
-        sqlite=SQLiteFieldConstraint.PRIMARY_KEY,
-        tcontrol=InputWidgetType.NONE)
-    """ID de referencia a Paciente"""
+                                        title="Psiquiátrico",showintable=False)
+    #examen fisico
 
     tension: Optional[str] = flags(default=None,
                                           sqlite=SQLiteFieldConstraint.NONE,
                                           tcontrol=InputWidgetType.INPUT_TEXT,
-                                          title="Tension Arterial")
+                                          title="Tension Arterial",showintable=False)
     
     frecuenciac: Optional[float] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.INPUT_FLOAT,
-                                  title="Frecuencia Cardiaca")
+                                  title="Frecuencia Cardiaca",showintable=False)
     
     frecuenciar: Optional[float] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.INPUT_FLOAT,
-                                  title="Frecuencia Respiratoria")
+                                  title="Frecuencia Respiratoria",showintable=False)
     
     temp: Optional[float] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.INPUT_FLOAT,
-                                  title="Temperatura Corporal")
+                                  title="Temperatura Corporal",showintable=False)
     
     satur: Optional[float] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.INPUT_FLOAT,
-                                  title="Saturacion de Oxigeno")
+                                  title="Saturacion de Oxigeno",showintable=False)
     
     peso: Optional[float] = flags(default=None,
                                   sqlite=SQLiteFieldConstraint.NONE,
                                   tcontrol=InputWidgetType.INPUT_FLOAT,
-                                  title="Peso")
+                                  title="Peso",showintable=False)
 
     talla: Optional[float] = flags(default=None,
                                    sqlite=SQLiteFieldConstraint.NONE,
                                    tcontrol=InputWidgetType.INPUT_FLOAT,
-                                   title="Talla")
+                                   title="Talla",showintable=False)
 
     imc: Optional[float] = flags(default=None,
                                  sqlite=SQLiteFieldConstraint.NONE,
                                  tcontrol=InputWidgetType.INPUT_FLOAT,
-                                 title="IMC")
+                                 title="IMC",showintable=False)
     observaciones: Optional[str] = flags(default=None,
                                  sqlite=SQLiteFieldConstraint.NONE,
                                  tcontrol=InputWidgetType.INPUT_TEXT_RICH,
-                                 title="Observaciones")
+                                 title="Observaciones",showintable=False)
+
+
+   
 
 
 @dataclass
@@ -395,30 +350,11 @@ class Profesional:
     especialidad: Optional[str] = flags(default=None,
                                         sqlite=SQLiteFieldConstraint.NONE,
                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="", required=True)
+                                        title="Especialidad", required=True)
     firma_digital: Optional[str] = flags(default=None,
                                          sqlite=SQLiteFieldConstraint.NONE,
                                          tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="",required=True)
+                                         title="Firma",required=True)
 
 
-@dataclass
-class HistoriaClinica:
-    """
-    Modelo integral que agrupa toda la historia clínica de un paciente.
-    """
-    paciente: InformacionGeneralPaciente = field(
-        default_factory=InformacionGeneralPaciente)
-    motivo_consulta: str = Empty
-    enfermedad_actual: str = Empty
-    antecedentes_personales: AntecedentesPersonales = field(
-        default_factory=AntecedentesPersonales)
-    antecedentes_familiares: AntecedentesFamiliares = field(
-        default_factory=AntecedentesFamiliares)
-    examen_sistemas: ExamenFisicoPorSistemas = field(
-        default_factory=ExamenFisicoPorSistemas)
-    examen_fisico: ExamenFisico = field(default_factory=ExamenFisico)
-    impresion_diagnostica: str = Empty
-    plan_manejo: PlanManejo = field(default_factory=PlanManejo)
-    seguimiento: Seguimiento = field(default_factory=Seguimiento)
-    profesional: Profesional = field(default_factory=Profesional)
+
