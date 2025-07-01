@@ -28,6 +28,10 @@ window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
 window_spacing = 50  # distancia vertical entre ventanas
 
+def regtexture(path, tag):
+        width, height, channels, data = dpg.load_image(path)
+        with dpg.texture_registry():
+            dpg.add_static_texture(width, height, data, tag=tag)
 
 class SearcherFlag(Enum):
     INSERT = auto()
@@ -254,23 +258,23 @@ class FormDetailDesigner:
             )
             if count_callbacks > 0:
                 dpg.add_separator()
-
+                
                 with align_items(0, count_callbacks):  # Alinea los botones a la derecha
                     if self._save_callback:
-                        dpg.add_button(
-                            label="Guardar",
+                        dpg.add_image_button(
+                            texture_tag="ico_save",
                             callback=self.__btn_callback,
                             user_data=self._save_callback,
                         )
                     if self._update_callback:
-                        dpg.add_button(
-                            label="Actualizar",
+                        dpg.add_image_button(
+                            texture_tag="icon_update",
                             callback=self.__btn_callback,
                             user_data=self._update_callback,
                         )
                     if self._delete_callback:
-                        dpg.add_button(
-                            label="Eliminar",
+                        dpg.add_image_button(
+                            texture_tag="ico_delete",
                             callback=self.__btn_callback,
                             user_data=self._delete_callback,
                         )
