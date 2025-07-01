@@ -25,6 +25,7 @@ class InputWidgetType(Enum):
     INPUT_INT = auto()
     INPUT_FLOAT = auto()
     COMBO = auto()
+    LIST = auto()
     DATE_PICKER = auto()
 
 

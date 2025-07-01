@@ -5,6 +5,7 @@ import sqlite3
 import internal
 from typing import Any, Optional
 from internal import SQLiteFieldConstraint, SQLITE_FLAGS
+import json
 
 def python_type_to_sqlite(py_type):
     if py_type == int or py_type == Optional[int]:
@@ -116,12 +117,16 @@ def to_insert_sql(instance: Any, use_reemplace:bool = False) -> str:
         if (isauto == False):
             col_names.append(f.name)
         value = getattr(instance, f.name)
+        # Si es lista, serializar a JSON
+        if isinstance(value, list):
+            value = json.dumps(value)
+            values.append(f"'{value.replace("'", "''")}'")
         # Formatea correctamente el valor para SQL
-        if isinstance(value, str):
+        elif isinstance(value, str):
             value = value.replace("'", "''")  # Escapa comillas simples
             values.append(f"'{value}'")  # Envuelve el valor entre comillas simples
         elif isinstance(value, date):
-            values.append(f"{value.strftime("%Y%m%d")}")
+            values.append(f"{value.strftime('%Y%m%d')}")
         elif value is None:
             values.append("NULL")
         elif isauto:
@@ -157,7 +162,11 @@ def to_update_sql(old: Any, new: Any) -> str:
         """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
             continue"""
         value = getattr(new, f.name)
-        value_sql = __convert_value_sqlite(value)
+        # Si es lista, serializar a JSON
+        if isinstance(value, list):
+            value_sql = f"'{json.dumps(value).replace("'", "''")}'"
+        else:
+            value_sql = __convert_value_sqlite(value)
         set_clauses.append(f'"{f.name}" = {value_sql}')
     set_clause = ", ".join(set_clauses)
 
@@ -200,8 +209,11 @@ def to_delete_sql(instance: Any) -> str:
             """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
                 continue"""
             value = getattr(instance, f.name)
-            value = __convert_value_sqlite(value)
-            
+            # Si es lista, serializar a JSON
+            if isinstance(value, list):
+                value = f"'{json.dumps(value).replace("'", "''")}'"
+            else:
+                value = __convert_value_sqlite(value)
             filters.append(f'"{f.name}" = {value}')
             
             
@@ -212,7 +224,11 @@ def to_delete_sql(instance: Any) -> str:
             """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
                 continue"""
             value = getattr(instance, f.name)
-            value = __convert_value_sqlite(value)
+            # Si es lista, serializar a JSON
+            if isinstance(value, list):
+                value = f"'{json.dumps(value).replace("'", "''")}'"
+            else:
+                value = __convert_value_sqlite(value)
             filters.append(f'"{f.name}" = {value}')
                 
 
@@ -228,7 +244,7 @@ def __convert_value_sqlite(value):
         value = value.replace("'", "''") 
         value = f"'{value}'"
     elif isinstance(value, date):
-        value=f"{value.strftime("%Y%m%d")}"
+        value=f"{value.strftime('%Y%m%d')}"
     elif value is None:
         value= "NULL"
     else:
@@ -347,6 +363,12 @@ def __tuple_to_dataclass(dataclass_type:type, data_tuple)->Any:
                 value = date(int(value[:4]), int(value[4:6]), int(value[6:8]))
             except Exception:
                 pass
+        elif ftype == list or getattr(ftype, "__origin__", None) == list:
+            # Deserializar JSON a lista
+            try:
+                value = json.loads(value) if value is not None else []
+            except Exception:
+                value = []
         values.append(value)
     return dataclass_type(*values)
 

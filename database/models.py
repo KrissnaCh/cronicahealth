@@ -318,7 +318,25 @@ class InformacionGeneralPaciente:
 
 
    
+@dataclass
+class Seguimiento:
+    """
+    Modelo para el seguimiento del paciente.
+    """
+    id: int = flags(
+        default=0,
+        sqlite=SQLiteFieldConstraint.NONE,
+        tcontrol=InputWidgetType.NONE)
+    """ID de referencia a Paciente"""
+    fecha_proximo_control: Optional[date] = flags(default=None,
+                                                  sqlite=SQLiteFieldConstraint.NONE,
+                                                  tcontrol=InputWidgetType.DATE_PICKER,
+                                                  title="Fecha Prox. Control")
 
+    observaciones_adicionales: Optional[str] = flags(default=None,
+                                                     sqlite=SQLiteFieldConstraint.NONE,
+                                                     tcontrol=InputWidgetType.INPUT_TEXT_RICH,
+                                                     title="Observaciones")
 
 @dataclass
 class PlanManejo:
@@ -350,27 +368,14 @@ class PlanManejo:
                                       sqlite=SQLiteFieldConstraint.NONE,
                                       tcontrol=InputWidgetType.INPUT_TEXT,
                                       title="Remisiones")
+    
+    seguimiento: list[Seguimiento] =  flags(default=[],
+                                      sqlite=SQLiteFieldConstraint.NONE,
+                                      tcontrol=InputWidgetType.LIST,
+                                      title="seguimiento")
 
 
-@dataclass
-class Seguimiento:
-    """
-    Modelo para el seguimiento del paciente.
-    """
-    id: int = flags(
-        default=0,
-        sqlite=SQLiteFieldConstraint.NONE,
-        tcontrol=InputWidgetType.NONE)
-    """ID de referencia a Paciente"""
-    fecha_proximo_control: Optional[date] = flags(default=None,
-                                                  sqlite=SQLiteFieldConstraint.NONE,
-                                                  tcontrol=InputWidgetType.DATE_PICKER,
-                                                  title="Fecha Prox. Control")
 
-    observaciones_adicionales: Optional[str] = flags(default=None,
-                                                     sqlite=SQLiteFieldConstraint.NONE,
-                                                     tcontrol=InputWidgetType.INPUT_TEXT_RICH,
-                                                     title="Observaciones")
 
 
 
