@@ -530,6 +530,12 @@ class DesignerBuilder:
                     return (id, dpg.add_date_picker())
 
         else:
+            if isinstance(default_date, str):
+                return self.add_input_text(
+                label,
+                default_date if default_date else "",
+                readonly,
+            )    
             return self.add_input_text(
                 label,
                 default_date.strftime("%d/%m/%Y") if default_date else "",

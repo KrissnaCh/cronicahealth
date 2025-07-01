@@ -293,6 +293,29 @@ class InformacionGeneralPaciente:
                                  tcontrol=InputWidgetType.INPUT_TEXT_RICH,
                                  title="Observaciones",showintable=False)
 
+    lb_pf:int= flags(default=0,
+                                     sqlite=SQLiteFieldConstraint.IGNORE,
+                                     tcontrol=InputWidgetType.SEP,
+                                     title="Profesional",
+                                     required=False, showintable=False)
+    pfnombre: str = flags(default=None,
+                        sqlite=SQLiteFieldConstraint.NONE,
+                        tcontrol=InputWidgetType.INPUT_TEXT,
+                        title="Profesional", required=True,searchable=True, showintable=True)
+    pfnumero_registro: str = flags(default=None,
+                                 sqlite=SQLiteFieldConstraint.NONE,
+                                 tcontrol=InputWidgetType.INPUT_TEXT,
+                                 title="Numero de Registro", required=True, showintable=False)
+    pfespecialidad: Optional[str] = flags(default=None,
+                                        sqlite=SQLiteFieldConstraint.NONE,
+                                        tcontrol=InputWidgetType.INPUT_TEXT,
+                                        title="Especialidad", required=True, showintable=False)
+    pffirma_digital: Optional[str] = flags(default=None,
+                                         sqlite=SQLiteFieldConstraint.NONE,
+                                         tcontrol=InputWidgetType.INPUT_TEXT,
+                                         title="Firma",required=True, showintable=False)
+
+
 
    
 
@@ -350,34 +373,6 @@ class Seguimiento:
                                                      title="Observaciones")
 
 
-@dataclass
-class Profesional:
-    """
-    Modelo que almacena los datos del profesional de la salud.
-    """
-    
-    id: int = flags(
-        default=0,
-        sqlite=SQLiteFieldConstraint.NONE,
-        tcontrol=InputWidgetType.NONE)
-    """ID de referencia a Paciente"""
-
-    nombre: str = flags(default=None,
-                        sqlite=SQLiteFieldConstraint.NONE,
-                        tcontrol=InputWidgetType.INPUT_TEXT,
-                        title="Nombre", required=True)
-    numero_registro: str = flags(default=None,
-                                 sqlite=SQLiteFieldConstraint.NONE,
-                                 tcontrol=InputWidgetType.INPUT_TEXT,
-                                 title="Numero de Registro", required=True)
-    especialidad: Optional[str] = flags(default=None,
-                                        sqlite=SQLiteFieldConstraint.NONE,
-                                        tcontrol=InputWidgetType.INPUT_TEXT,
-                                        title="Especialidad", required=True)
-    firma_digital: Optional[str] = flags(default=None,
-                                         sqlite=SQLiteFieldConstraint.NONE,
-                                         tcontrol=InputWidgetType.INPUT_TEXT,
-                                         title="Firma",required=True)
 
 
 

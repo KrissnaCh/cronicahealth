@@ -46,8 +46,8 @@ def create_table_sql(dataclass_type):
 
     for f in fields(dataclass_type):
         # Ignorar campos con IGNORE
-        if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
-            continue
+        """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
+            continue"""
         # Determina el tipo SQLite basado en el tipo Python del campo
         col_type = python_type_to_sqlite(f.type)
         col_def = f"\"{f.name}\" {col_type}"
@@ -110,8 +110,8 @@ def to_insert_sql(instance: Any, use_reemplace:bool = False) -> str:
 
     for f in fields(instance):
         # Ignorar campos con IGNORE
-        if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
-            continue
+        """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
+            continue"""
         isauto = SQLiteFieldConstraint.AUTOINCREMENT in f.metadata[SQLITE_FLAGS] and f.type == int
         if (isauto == False):
             col_names.append(f.name)
@@ -154,8 +154,8 @@ def to_update_sql(old: Any, new: Any) -> str:
     set_clauses = []
     for f in fields(new):
         # Ignorar campos con IGNORE
-        if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
-            continue
+        """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
+            continue"""
         value = getattr(new, f.name)
         value_sql = __convert_value_sqlite(value)
         set_clauses.append(f'"{f.name}" = {value_sql}')
@@ -197,8 +197,8 @@ def to_delete_sql(instance: Any) -> str:
         # Usar solo los campos PRIMARY KEY
         for f in pk_fields:
             # Ignorar campos con IGNORE
-            if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
-                continue
+            """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
+                continue"""
             value = getattr(instance, f.name)
             value = __convert_value_sqlite(value)
             
@@ -209,8 +209,8 @@ def to_delete_sql(instance: Any) -> str:
         # Usar todos los campos con valor distinto de None
         for f in fields(instance):
             # Ignorar campos con IGNORE
-            if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
-                continue
+            """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
+                continue"""
             value = getattr(instance, f.name)
             value = __convert_value_sqlite(value)
             filters.append(f'"{f.name}" = {value}')
@@ -258,8 +258,8 @@ def to_select_query(instance, table_name=None, ignore_primary_int=False, compara
 
     for f in fields(instance):
         # Ignorar campos con IGNORE
-        if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
-            continue
+        """if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
+            continue"""
         value = getattr(instance, f.name)
         # Ignore primary key fields of type int if ignore_primary_int is True
         is_primary_int = (
