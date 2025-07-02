@@ -208,6 +208,7 @@ class FormDetailDesigner:
                     with dpg.group(horizontal=True):
                         for f in chunk:
                             self.makecontrol(just, f)
+                            pass
 
             count_callbacks = sum(
                 cb is not None

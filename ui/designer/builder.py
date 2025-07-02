@@ -131,6 +131,7 @@ class DesignerBuilder:
     def add_input_list(
         self, label, model, default_value: list, _readonly, designer_fields
     ) -> ControlID:
+        print("error code")
         with dpg.group():
             with dpg.table(
                 height=300,
@@ -162,25 +163,25 @@ class DesignerBuilder:
                             )
                             dpg.set_item_user_data(selectable, (rowid, data, tbid))
                             self._ids_table_v2[tbid][rowid].append(selectable)
-                with dpg.group(horizontal=True):
-                    dpg.add_image_button("ico_info")
+            with dpg.group(horizontal=True):
+                dpg.add_image_button("ico_info")
 
-                    dpg.add_image_button(
-                        texture_tag="ico_add",
-                        # callback=self.__btn_callback,
-                        user_data=tbid,
-                    )
+                dpg.add_image_button(
+                    texture_tag="ico_add",
+                    # callback=self.__btn_callback,
+                    user_data=tbid,
+                )
 
-                    dpg.add_image_button(
-                        texture_tag="ico_update",
-                        # callback=self.__btn_callback,
-                        user_data=tbid,
-                    )
-                    dpg.add_image_button(
-                        texture_tag="ico_delete",
-                        # callback=self.__btn_callback,
-                        user_data=tbid,
-                    )
+                dpg.add_image_button(
+                    texture_tag="ico_update",
+                    # callback=self.__btn_callback,
+                    user_data=tbid,
+                )
+                dpg.add_image_button(
+                    texture_tag="ico_delete",
+                    # callback=self.__btn_callback,
+                    user_data=tbid,
+                )
         return (
             -1,  # dpg.add_button(label="Mostrar Seleccion"),
             tbid,  # dpg.add_button(label="Mostrar Seleccion"),

@@ -13,8 +13,7 @@ from ui.designer.detail import FormDetailDesigner
 from ui.designer.searcher import FormSearcherDesigner
 from ui.events_application import (
     DbBasicComand,
-    DbSeguimiento,
-    DbEventPlanManejo,
+    
 )
 
 
@@ -148,8 +147,6 @@ class Application:
             [
                 MedicalConsultation,
                 InformacionGeneralPaciente,
-                PlanManejo,
-                Seguimiento,
             ]
         )
         with dpg.theme() as global_theme:
