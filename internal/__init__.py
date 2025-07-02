@@ -3,9 +3,10 @@ from enum import Enum, Flag, auto
 import sqlite3
 from typing import Callable, Optional, TypeAlias
 
-ControlID:TypeAlias = tuple[(int | str), (int | str)]
+ControlID: TypeAlias = tuple[(int | str), (int | str)]
 
-ActionDesigner:TypeAlias = Optional[Callable]
+ActionDesigner: TypeAlias = Optional[Callable]
+
 
 class SQLiteFieldConstraint(Flag):
     PRIMARY_KEY = auto()
@@ -17,9 +18,10 @@ class SQLiteFieldConstraint(Flag):
 
 
 class InputWidgetType(Enum):
-    MODEL=auto()
-    NONE= auto()
-    SEP= auto()
+    MODEL = auto()
+    NONE = auto()
+    SEP = auto()
+    INPUT_JSON = auto()
     INPUT_TEXT = auto()
     INPUT_TEXT_RICH = auto()
     INPUT_INT = auto()
@@ -57,25 +59,38 @@ SQLITE_FLAGS = "sqlite_flags"
 Empty = ""
 """ Clase para representar un valor vacío, se usa para concatenar cadenas """
 
+LISTMODEL = "designer_model"
+""" Modelo de datos asociado al campo, se usa para campos tipo lista """
 
-def flags(*, default,
-          sqlite: SQLiteFieldConstraint,
-          tcontrol: InputWidgetType,
-          title: str = "",
-          readonly: bool = False,
-          required: bool = False,
-          items: Optional[list] = None,
-          searchable: bool = False, showintable:bool = True):
+
+def flags(
+    *,
+    default,
+    sqlite: SQLiteFieldConstraint,
+    tcontrol: InputWidgetType,
+    default_factory=None,
+    title: str = "",
+    readonly: bool = False,
+    required: bool = False,
+    items: Optional[list] = None,
+    searchable: bool = False,
+    showintable: bool = True
+):
     """
-    Decorador para definir metadatos de diseño para campos de dataclass.
-
+    Crea un campo personalizado para modelos de datos, agregando metadatos útiles para integración con SQLite y widgets de entrada.
     Parámetros:
-        tcontrol (InputWidgetType): Tipo de control del campo.
-        title (str): Título del campo en el formulario.
-        readonly (bool): Si el campo es de solo lectura.
-        required (bool): Si el campo es obligatorio.
-        items (list): Lista de items para controles tipo Combo.
-        searchable (bool): Si el campo es parte de un formulario de búsqueda.
+        default: Valor por defecto del campo.
+        sqlite (SQLiteFieldConstraint): Restricciones o configuración específica para el campo en SQLite.
+        tcontrol (InputWidgetType): Tipo de widget de entrada asociado al campo.
+        default_factory (opcional): Función para generar el valor por defecto dinámicamente.
+        title (str, opcional): Título descriptivo del campo. Por defecto es una cadena vacía.
+        readonly (bool, opcional): Indica si el campo es de solo lectura. Por defecto es False.
+        required (bool, opcional): Indica si el campo es obligatorio. Por defecto es False.
+        items (list, opcional): Lista de opciones para campos tipo selección. Por defecto es None.
+        searchable (bool, opcional): Indica si el campo es buscable. Por defecto es False.
+        showintable (bool, opcional): Indica si el campo se muestra en tablas. Por defecto es True.
+    Retorna:
+        Un campo configurado con los metadatos especificados, listo para ser usado en modelos de datos.
     """
 
     return field(
@@ -88,13 +103,54 @@ def flags(*, default,
             REQUIRED: required,
             ITEMS: items or [],
             SEARCHABLE: searchable,
-            SHOWINTABLE:showintable
-        }
+            SHOWINTABLE: showintable,
+        },
     )
+
+
+def flagsv2(
+    *,
+    default_factory,
+    model,
+    sqlite: SQLiteFieldConstraint,
+    tcontrol: InputWidgetType,
+    title: str = "",
+    readonly: bool = False,
+    required: bool = False,
+    items: Optional[list] = None,
+    searchable: bool = False,
+    showintable: bool = True
+):
+    """
+    Crea un campo personalizado para modelos de datos, agregando metadatos útiles para integración con SQLite y widgets de entrada.
+    Parámetros:
+        sqlite (SQLiteFieldConstraint): Restricciones o configuración específica para el campo en SQLite.
+        tcontrol (InputWidgetType): Tipo de widget de entrada asociado al campo.
+        default_factory (opcional): Función para generar el valor por defecto dinámicamente.
+        title (str, opcional): Título descriptivo del campo. Por defecto es una cadena vacía.
+        readonly (bool, opcional): Indica si el campo es de solo lectura. Por defecto es False.
+        required (bool, opcional): Indica si el campo es obligatorio. Por defecto es False.
+        items (list, opcional): Lista de opciones para campos tipo selección. Por defecto es None.
+        searchable (bool, opcional): Indica si el campo es buscable. Por defecto es False.
+        showintable (bool, opcional): Indica si el campo se muestra en tablas. Por defecto es True.
+    Retorna:
+        Un campo configurado con los metadatos especificados, listo para ser usado en modelos de datos.
+    """
+    return field(
+        default_factory=default_factory,
+        metadata={
+            SQLITE_FLAGS: sqlite,
+            CONTROL: tcontrol,
+            TITLE: title,
+            READONLY: readonly,
+            REQUIRED: required,
+            ITEMS: items or [],
+            SEARCHABLE: searchable,
+            SHOWINTABLE: showintable,
+            LISTMODEL:model
+        },
+    )
+
 
 def is_empty_or_whitespace(s):
     return not s or s.strip() == ""
-
-
-
-

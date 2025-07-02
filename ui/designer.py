@@ -4,9 +4,11 @@ from enum import Enum, auto
 from typing import Any, Callable, Optional, Union
 import dearpygui.dearpygui as dpg
 from database import crud
+from typing import get_args, get_origin, List
 from internal import (
     CONTROL,
     ITEMS,
+    LISTMODEL,
     READONLY,
     REQUIRED,
     SEARCHABLE,
@@ -28,10 +30,12 @@ window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
 window_spacing = 50  # distancia vertical entre ventanas
 
+
 def regtexture(path, tag):
-        width, height, channels, data = dpg.load_image(path)
-        with dpg.texture_registry():
-            dpg.add_static_texture(width, height, data, tag=tag)
+    width, height, channels, data = dpg.load_image(path)
+    with dpg.texture_registry():
+        dpg.add_static_texture(width, height, data, tag=tag)
+
 
 class SearcherFlag(Enum):
     INSERT = auto()
@@ -225,29 +229,6 @@ class FormDetailDesigner:
                         for f in chunk:
                             self.makecontrol(just, f)
 
-            """fields_compatible = []
-            tmp = []
-            for f in __fields:
-                if f.metadata[CONTROL] == InputWidgetType.SEP:
-                    fields_compatible.append(tmp)
-                    tmp = []
-                else:
-                    tmp.append(f)"""
-
-            # for chunk in batched(__fields,2):
-            # for chunk in batched(ls,2):
-            # with dpg.group(horizontal=True):
-            #        print("--")
-            #        for f in chunk:
-            # self.makecontrol(just, f)
-            #            print(f.metadata[TITLE])
-
-            """for chunk in batched(fields_compatible,2):
-                with dpg.group(horizontal=True):
-                    for f in chunk:
-                        #if all(key in f.metadata for key in self.designer_fields):
-                        self.makecontrol(just, f)"""
-
             count_callbacks = sum(
                 cb is not None
                 for cb in [
@@ -258,7 +239,7 @@ class FormDetailDesigner:
             )
             if count_callbacks > 0:
                 dpg.add_separator()
-                
+
                 with align_items(0, count_callbacks):  # Alinea los botones a la derecha
                     if self._save_callback:
                         dpg.add_image_button(
@@ -327,6 +308,21 @@ class FormDetailDesigner:
                         readonly,
                     ),
                     InputWidgetType.INPUT_FLOAT,
+                )
+            case InputWidgetType.LIST:
+                if not f.metadata.get(LISTMODEL):
+                    raise ValueError(
+                        f"El campo {f.name} debe tener un modelo de lista definido en {LISTMODEL}."
+                    )
+                self.attrs[f.name] = (
+                    self.builder.add_input_list(
+                        f.metadata[TITLE],
+                        f.metadata[LISTMODEL],
+                        getattr(self.model, f.name),
+                        readonly,
+                        self.designer_fields,
+                    ),
+                    InputWidgetType.INPUT_JSON,
                 )
             case InputWidgetType.DATE_PICKER:
                 self.attrs[f.name] = (
@@ -480,6 +476,55 @@ class DesignerBuilder:
         else:
             return self.add_input_text(label, str(default_value), _readonly)
 
+    def add_input_list(
+        self, label, model, default_value: list, _readonly, designer_fields
+    ) -> ControlID:
+        # with dpg.group():
+        # self.add_separator(label)
+        # dpg.add_button(label="Mostrar Seleccion")#, callback=self.__show_selection)
+        with dpg.group():
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="Mostrar Seleccion")
+
+                dpg.add_image_button(
+                    texture_tag="ico_save",
+                    # callback=self.__btn_callback,
+                    # user_data=self._save_callback,
+                )
+
+                dpg.add_image_button(
+                    texture_tag="icon_update",
+                    # callback=self.__btn_callback,
+                    # user_data=self._update_callback,
+                )
+                dpg.add_image_button(
+                    texture_tag="ico_delete",
+                    # callback=self.__btn_callback,
+                    # user_data=self._delete_callback,
+                )
+            with dpg.table(
+                height=300,
+                row_background=True,
+                policy=dpg.mvTable_SizingFixedFit,
+                borders_innerH=True,
+                borders_outerH=True,
+                borders_innerV=True,
+                borders_outerV=True,
+                clipper=True,
+            ):
+                columns = [
+                    f
+                    for f in fields(model)
+                    if all(key in f.metadata for key in designer_fields)
+                    and f.metadata[SHOWINTABLE]
+                ]
+                for f in columns:
+                    dpg.add_table_column(label=f.metadata[TITLE])
+        return (
+            -1,  # dpg.add_button(label="Mostrar Seleccion"),
+            -1,  # dpg.add_button(label="Mostrar Seleccion"),
+        )
+
     def add_combo(self, label, items, default_value, readonly) -> ControlID:
         """Agrega un campo de selección desplegable al formulario.
         Args:
@@ -532,10 +577,10 @@ class DesignerBuilder:
         else:
             if isinstance(default_date, str):
                 return self.add_input_text(
-                label,
-                default_date if default_date else "",
-                readonly,
-            )    
+                    label,
+                    default_date if default_date else "",
+                    readonly,
+                )
             return self.add_input_text(
                 label,
                 default_date.strftime("%d/%m/%Y") if default_date else "",
@@ -728,52 +773,7 @@ class FormSearcherDesigner:
         pass
 
 
-class FormTableShow:
-    def __show_selection(self, sender):
-        self.close()
-        if self._current_model:
-            if self._custom_show:
-                self._custom_show(self._current_model, self._title, self._args)
-                pass
-            else:
-                match self._args[0]:
-                    case SearcherFlag.UPDATE:
-                        FormDetailDesigner(
-                            self._current_model,
-                            title=self._title,
-                            update_callback=self._args[1],
-                        ).show()
-                    case SearcherFlag.CONSULT:
-                        FormDetailDesigner(
-                            self._current_model, title=self._title, is_readonly=True
-                        ).show()
-                    case SearcherFlag.DELETE:
-                        FormDetailDesigner(
-                            self._current_model,
-                            title=self._title,
-                            delete_callback=self._args[1],
-                            is_readonly=True,
-                        ).show()
-                    case SearcherFlag.INSERT:
-                        if self._custom_target:
-                            FormDetailDesigner(
-                                self._custom_target(),
-                                title=self._title,
-                                save_callback=self._args[1],
-                                is_readonly=False,
-                                orig=self._current_model,
-                            ).show()
-
-    def __row_clicked(self, sender, value, user_data):
-        """Maneja el evento de selección de una fila en la tabla."""
-        if value:
-            rowid, data = user_data
-            for rid, selectables in self._ids_table.items():
-                if rid != rowid:
-                    for selectable in selectables:
-                        dpg.set_value(selectable, False)
-            self._current_model = data
-
+class FormTableBase:
     def __init__(
         self,
         title,
@@ -795,7 +795,7 @@ class FormTableShow:
             SEARCHABLE,
             SHOWINTABLE,
         ]
-        self._window_id: Union[int, str] = None  # type: ignore
+
         self._current_model: Optional[object] = None
         self._num_columns = sum(
             1
@@ -803,8 +803,8 @@ class FormTableShow:
             if all(key in f.metadata for key in self._designer_fields)
             and f.metadata[SHOWINTABLE]
         )
+        self._on_selected: Callable = lambda: None
         self._ids_table: dict[int | str, list] = {}
-        self.__create_ui()
 
     def add_row(self, data: Any):
         columns = [
@@ -835,6 +835,92 @@ class FormTableShow:
             for child in children_to_delete:
                 dpg.delete_item(child)
 
+    def __row_clicked(self, sender, value, user_data):
+        """Maneja el evento de selección de una fila en la tabla."""
+        if value:
+            rowid, data = user_data
+            for rid, selectables in self._ids_table.items():
+                if rid != rowid:
+                    for selectable in selectables:
+                        dpg.set_value(selectable, False)
+            self._current_model = data
+
+    def __show_selection(self, sender):
+        self._on_selected()
+        if self._current_model:
+            if self._custom_show:
+                self._custom_show(self._current_model, self._title, self._args)
+            else:
+                match self._args[0]:
+                    case SearcherFlag.UPDATE:
+                        FormDetailDesigner(
+                            self._current_model,
+                            title=self._title,
+                            update_callback=self._args[1],
+                        ).show()
+                    case SearcherFlag.CONSULT:
+                        FormDetailDesigner(
+                            self._current_model, title=self._title, is_readonly=True
+                        ).show()
+                    case SearcherFlag.DELETE:
+                        FormDetailDesigner(
+                            self._current_model,
+                            title=self._title,
+                            delete_callback=self._args[1],
+                            is_readonly=True,
+                        ).show()
+                    case SearcherFlag.INSERT:
+                        if self._custom_target:
+                            FormDetailDesigner(
+                                self._custom_target(),
+                                title=self._title,
+                                save_callback=self._args[1],
+                                is_readonly=False,
+                                orig=self._current_model,
+                            ).show()
+
+    def build(self):
+        dpg.add_button(label="Mostrar Seleccion", callback=self.__show_selection)
+        with dpg.table(
+            row_background=True,
+            policy=dpg.mvTable_SizingFixedFit,
+            borders_innerH=True,
+            borders_outerH=True,
+            borders_innerV=True,
+            borders_outerV=True,
+            clipper=True,
+        ) as self._table_id:
+            columns = [
+                f
+                for f in fields(self._model)
+                if all(key in f.metadata for key in self._designer_fields)
+                and f.metadata[SHOWINTABLE]
+            ]
+            for f in columns:
+                dpg.add_table_column(label=f.metadata[TITLE])
+
+
+class FormTableShow(FormTableBase):
+
+    def show(self):
+        dpg.show_item(self._window_id)
+
+    def close(self):
+        dpg.delete_item(self._window_id)
+
+    def __init__(
+        self,
+        title,
+        model,
+        args: tuple[SearcherFlag, ActionDesigner],
+        custom_target: Optional[type] = None,
+        custom_show: Optional[Callable] = None,
+    ) -> None:
+        super().__init__(title, model, args, custom_target, custom_show)
+        self._on_selected = self.close
+        self._window_id: Union[int, str] = None  # type: ignore
+        self.__create_ui()
+
     def __create_ui(self):
         global window_count
         y_pos = window_base_y + window_count * window_spacing
@@ -845,28 +931,5 @@ class FormTableShow:
             no_collapse=True,
             show=False,
         ) as self._window_id:
-            dpg.add_button(label="Mostrar Seleccion", callback=self.__show_selection)
-            with dpg.table(
-                row_background=True,
-                policy=dpg.mvTable_SizingFixedFit,
-                borders_innerH=True,
-                borders_outerH=True,
-                borders_innerV=True,
-                borders_outerV=True,
-                clipper=True,
-            ) as self._table_id:
-                columns = [
-                    f
-                    for f in fields(self._model)
-                    if all(key in f.metadata for key in self._designer_fields)
-                    and f.metadata[SHOWINTABLE]
-                ]
-                for f in columns:
-                    dpg.add_table_column(label=f.metadata[TITLE])
+            self.build()
         pass
-
-    def show(self):
-        dpg.show_item(self._window_id)
-
-    def close(self):
-        dpg.delete_item(self._window_id)
