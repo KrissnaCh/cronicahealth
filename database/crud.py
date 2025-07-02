@@ -283,9 +283,14 @@ def to_select_query(instance, table_name=None, ignore_primary_int=False, compara
             SQLiteFieldConstraint.PRIMARY_KEY in f.metadata[SQLITE_FLAGS] and
             f.type == int
         )
+
         if value is not None:
             if ignore_primary_int and is_primary_int:
                 continue
+            if isinstance(value, list):
+                if not value:
+                    continue  # Ignorar listas vacías
+                value = json.dumps(value)
             filters.append(f'"{f.name}" {comparator} ?')
             params.append(value)
 

@@ -8,7 +8,9 @@ from database.models import (
     Seguimiento,
 )
 from ui import message
-from ui.designer import FormDetailDesigner, FormSearcherDesigner, SearcherFlag, regtexture
+from ui.designer import  SearcherFlag, regtexture
+from ui.designer.detail import FormDetailDesigner
+from ui.designer.searcher import FormSearcherDesigner
 from ui.events_application import (
     DbBasicComand,
     DbSeguimiento,
@@ -81,7 +83,10 @@ class Application:
         # Cargar imagen de fondo y dibujarla centrada y escalada al viewport
         regtexture("assents/ico_delete.png","ico_delete")
         regtexture("assents/ico_save.png","ico_save")
-        regtexture("assents/icon_update.png","icon_update")
+        regtexture("assents/ico_update.png","ico_update")
+        regtexture("assents/ico_search.png","ico_search")
+        regtexture("assents/ico_add.png","ico_add")
+        regtexture("assents/ico_info.png","ico_info")
 
         bg_path = os.path.join("assents", "background.png")
         self._bg_draw_image_id = None
