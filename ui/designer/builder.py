@@ -235,8 +235,8 @@ class DesignerBuilder:
                 case 1:
                     """Actualizar la fila seleccionada en la tabla."""
                     if tbid in self._current_model:
-                        rowid, data = self._current_model[tbid]
-                        rid = rowid
+                        rowid = self._current_model[tbid]
+                        data =dpg.get_item_user_data(rowid)
                         dlg = FormDetailDesigner(
                             data,
                             "Actualizar",
