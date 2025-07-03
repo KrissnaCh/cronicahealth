@@ -187,7 +187,11 @@ def to_update_sql(old: Any, new: Any) -> str:
         if SQLITE_FLAGS in f.metadata and SQLiteFieldConstraint.IGNORE in f.metadata[SQLITE_FLAGS]:
             continue
         value = getattr(old, f.name)
-        value_sql = __convert_value_sqlite(value)
+        # Si es lista, serializar a JSON
+        if isinstance(value, list):
+            value_sql = f"'{json.dumps(value,cls=EnhancedJSONEncoder).replace("'", "''")}'"
+        else:
+            value_sql = __convert_value_sqlite(value)
         where_clauses.append(f'"{f.name}" = {value_sql}')
     where_clause = " AND ".join(where_clauses)
 

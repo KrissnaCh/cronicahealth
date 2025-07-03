@@ -254,7 +254,6 @@ class DesignerBuilder:
         with dpg.table_row(parent=tbid) as rowid:
             self._ids_table_v2[tbid][rowid] = []
             for f in self._cols[tbid]:
-                print(data)
                 attr = getattr(data, f.name)
                 if isinstance(attr, date):
                     label_value = attr.strftime("%d/%m/%Y")
