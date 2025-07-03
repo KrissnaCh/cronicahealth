@@ -1,4 +1,5 @@
 from dataclasses import field, fields, is_dataclass
+import dataclasses
 from datetime import date
 from enum import Flag, auto
 import sqlite3
@@ -18,6 +19,15 @@ def python_type_to_sqlite(py_type):
         return "INTEGER"  # Guardar fechas como texto
     else:
         return "TEXT"  # Default
+    
+
+class EnhancedJSONEncoder(json.JSONEncoder):
+        def default(self, o):
+            if dataclasses.is_dataclass(o):
+                return dataclasses.asdict(o) # type: ignore
+            elif isinstance(o, date):
+                return o.strftime('%Y%m%d')
+            return super().default(o)
 
 def create_table_sql(dataclass_type):
     """
@@ -119,7 +129,7 @@ def to_insert_sql(instance: Any, use_reemplace:bool = False) -> str:
         value = getattr(instance, f.name)
         # Si es lista, serializar a JSON
         if isinstance(value, list):
-            value = json.dumps(value)
+            value = json.dumps(value,cls=EnhancedJSONEncoder)
             values.append(f"'{value.replace("'", "''")}'")
         # Formatea correctamente el valor para SQL
         elif isinstance(value, str):
@@ -164,7 +174,7 @@ def to_update_sql(old: Any, new: Any) -> str:
         value = getattr(new, f.name)
         # Si es lista, serializar a JSON
         if isinstance(value, list):
-            value_sql = f"'{json.dumps(value).replace("'", "''")}'"
+            value_sql = f"'{json.dumps(value,cls=EnhancedJSONEncoder).replace("'", "''")}'"
         else:
             value_sql = __convert_value_sqlite(value)
         set_clauses.append(f'"{f.name}" = {value_sql}')
@@ -211,7 +221,7 @@ def to_delete_sql(instance: Any) -> str:
             value = getattr(instance, f.name)
             # Si es lista, serializar a JSON
             if isinstance(value, list):
-                value = f"'{json.dumps(value).replace("'", "''")}'"
+                value = f"'{json.dumps(value,cls=EnhancedJSONEncoder).replace("'", "''")}'"
             else:
                 value = __convert_value_sqlite(value)
             filters.append(f'"{f.name}" = {value}')
@@ -226,7 +236,7 @@ def to_delete_sql(instance: Any) -> str:
             value = getattr(instance, f.name)
             # Si es lista, serializar a JSON
             if isinstance(value, list):
-                value = f"'{json.dumps(value).replace("'", "''")}'"
+                value = f"'{json.dumps(value,cls=EnhancedJSONEncoder).replace("'", "''")}'"
             else:
                 value = __convert_value_sqlite(value)
             filters.append(f'"{f.name}" = {value}')
@@ -290,7 +300,7 @@ def to_select_query(instance, table_name=None, ignore_primary_int=False, compara
             if isinstance(value, list):
                 if not value:
                     continue  # Ignorar listas vacías
-                value = json.dumps(value)
+                value = json.dumps(value,cls=EnhancedJSONEncoder)
             filters.append(f'"{f.name}" {comparator} ?')
             params.append(value)
 
@@ -372,6 +382,7 @@ def __tuple_to_dataclass(dataclass_type:type, data_tuple)->Any:
             # Deserializar JSON a lista
             try:
                 value = json.loads(value) if value is not None else []
+                print(value, type(value))
             except Exception:
                 value = []
         values.append(value)

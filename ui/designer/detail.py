@@ -1,7 +1,7 @@
 import copy
 from dataclasses import fields, is_dataclass
 from datetime import date
-from typing import Union
+from typing import Callable, Optional, Union
 import dearpygui.dearpygui as dpg
 from internal.ext import align_items
 from ui import designer
@@ -84,7 +84,9 @@ class FormDetailDesigner:
                                         day=date_value["month_day"],
                                     ),
                                 )
-
+                    elif typ == InputWidgetType.INPUT_JSON:
+                        """bandera de entrada de lista"""
+                        setattr(self.model, key,self.builder.get_list(id[1]))
                     else:
                         setattr(self.model, key, dpg.get_value(id[1]))
                 if self._orig:
@@ -98,9 +100,16 @@ class FormDetailDesigner:
             msgbox.show("Error", str(e), MessageBoxButtons.OK, on_close=None)
             pass
 
-    def show(self):
+    def show(self, onclose:Optional[Callable] = None):
         """Muestra la ventana del formulario de detalle."""
+        if onclose:
+            self.__close = onclose
         dpg.show_item(self._window_id)
+
+    def _onclose(self, sender):
+        if self.__close:
+            self.__close()
+        pass
 
     def __init__(
         self,
@@ -126,6 +135,7 @@ class FormDetailDesigner:
 
         self._window_id: Union[int, str] = 0
         self.model = model
+        self.__close:Optional[Callable]  = None
         self._title = title
         self.designer_fields = [CONTROL, TITLE, READONLY, REQUIRED, ITEMS, SEARCHABLE]
 
@@ -174,6 +184,7 @@ class FormDetailDesigner:
             pos=(x_pos, y_pos),
             no_collapse=True,
             show=False,
+            on_close=self._onclose
         ) as self._window_id:
             # Calcula la longitud máxima de las etiquetas para la alineación, usando una expresión generadora para eficiencia
             just = max(
@@ -189,9 +200,11 @@ class FormDetailDesigner:
                 for f in fields(self.model)
                 if all(key in f.metadata for key in self.designer_fields)
             ]
+            
             __fields = [
                 f for f in __fields if f.metadata[CONTROL] != InputWidgetType.NONE
             ]
+            
             dt = {}
             last = None
             for f in __fields:
@@ -199,7 +212,8 @@ class FormDetailDesigner:
                     dt[f.metadata[TITLE]] = []
                     last = f.metadata[TITLE]
                 else:
-                    dt[last].append(f)
+                    if last:
+                        dt[last].append(f)
 
             for key in dt:
                 self.builder.add_separator(key)
@@ -209,6 +223,11 @@ class FormDetailDesigner:
                         for f in chunk:
                             self.makecontrol(just, f)
                             pass
+            if not dt:
+                for chunk in batched(__fields, 2):
+                    with dpg.group(horizontal=True):
+                        for f in chunk:
+                            self.makecontrol(just, f)
 
             count_callbacks = sum(
                 cb is not None
@@ -297,7 +316,6 @@ class FormDetailDesigner:
                     )
                 self.attrs[f.name] = (
                     self.builder.add_input_list(
-                        f.metadata[TITLE],
                         f.metadata[LISTMODEL],
                         getattr(self.model, f.name),
                         readonly,

@@ -1,14 +1,19 @@
-from dataclasses import fields
+from dataclasses import Field, fields
 from datetime import date
+from typing import Any, Optional, Union
 import dearpygui.dearpygui as dpg
 
 from internal import SHOWINTABLE, TITLE, ControlID
 
+
 class DesignerBuilder:
     """Clase para construir controles de formulario de manera sencilla."""
 
-    def __init__(self) :
-        self._ids_table_v2: dict[int | str,dict[int | str, list]] = {}
+    def __init__(self):
+        self._ids_table_v2: dict[int | str, dict[int | str, list]] = {}
+        self._cols: dict[int | str, list[Field[Any]]] = {}
+        self._models: dict[int | str, Any] = {}
+        self._current_model: dict[int | str, Any] = {}
         """Posibles controles con multiples tablas"""
         pass
 
@@ -121,17 +126,23 @@ class DesignerBuilder:
     def __row_clicked(self, sender, value, user_data):
         """Maneja el evento de selección de una fila en la tabla."""
         if value:
-            rowid, data, tbid = user_data
+            rowid, tbid = user_data
             for rid, selectables in self._ids_table_v2[tbid].items():
                 if rid != rowid:
                     for selectable in selectables:
                         dpg.set_value(selectable, False)
-            self._current_model = data
+            self._current_model[tbid] = rowid
+
+    def get_list(self, id: Union[str, int])->Optional[list]:
+        if id in self._ids_table_v2:
+            return [dpg.get_item_user_data(val) for val in self._ids_table_v2[id].keys() if val]
+        else:
+            return None
+        
 
     def add_input_list(
-        self, label, model, default_value: list, _readonly, designer_fields
+        self, model, default_value: list, _readonly, designer_fields
     ) -> ControlID:
-        print("error code")
         with dpg.group():
             with dpg.table(
                 height=300,
@@ -144,48 +155,119 @@ class DesignerBuilder:
                 clipper=True,
             ) as tbid:
                 self._ids_table_v2[tbid] = {}
-                columns = [
+                self._models[tbid] = model
+                self._cols[tbid] = [
                     f
-                    for f in fields(model)
+                    for f in fields(self._models[tbid])
                     if all(key in f.metadata for key in designer_fields)
                     and f.metadata[SHOWINTABLE]
                 ]
-                for f in columns:
+
+                for f in self._cols[tbid]:
                     dpg.add_table_column(label=f.metadata[TITLE])
                 for data in default_value:
-                    with dpg.table_row(parent=tbid) as rowid:
-                        self._ids_table_v2[tbid][rowid] = []
-                        for f in columns:
-                            selectable = dpg.add_selectable(
-                                label=getattr(data, f.name),
-                                span_columns=True,
-                                callback=self.__row_clicked,
-                            )
-                            dpg.set_item_user_data(selectable, (rowid, data, tbid))
-                            self._ids_table_v2[tbid][rowid].append(selectable)
+                    self.__add_row(tbid, data)
             with dpg.group(horizontal=True):
-                dpg.add_image_button("ico_info")
 
                 dpg.add_image_button(
                     texture_tag="ico_add",
-                    # callback=self.__btn_callback,
-                    user_data=tbid,
+                    callback=self.__btn_callback,
+                    user_data=(tbid, 0),
                 )
 
                 dpg.add_image_button(
                     texture_tag="ico_update",
-                    # callback=self.__btn_callback,
-                    user_data=tbid,
+                    callback=self.__btn_callback,
+                    user_data=(tbid, 1),
                 )
                 dpg.add_image_button(
                     texture_tag="ico_delete",
-                    # callback=self.__btn_callback,
-                    user_data=tbid,
+                    callback=self.__btn_callback,
+                    user_data=(tbid, 2),
                 )
         return (
-            -1,  # dpg.add_button(label="Mostrar Seleccion"),
-            tbid,  # dpg.add_button(label="Mostrar Seleccion"),
+            -1,
+            tbid,
         )
+
+    def __btn_callback(self, sender):
+        
+        dpg.disable_item(sender)
+
+        from ui.designer.detail import (
+            FormDetailDesigner,
+        )  # Import local para evitar import circular
+
+        value = dpg.get_item_user_data(sender)
+        if value:
+            tbid, action = value
+            def add_handler(old, new):
+                nonlocal tbid
+                self.__add_row(tbid, new)
+                dpg.enable_item(sender)
+
+            def update_handler(old, new):
+                nonlocal tbid
+                delete()
+                self.__add_row(tbid,new)
+                dpg.enable_item(sender)
+            def close_handler():
+                dpg.enable_item(sender)
+
+            def delete():
+                if tbid in self._current_model:
+                    rowid = self._current_model[tbid]
+                    if rowid in self._ids_table_v2[tbid]:
+                        del self._ids_table_v2[tbid][rowid]
+                    dpg.delete_item(rowid)
+                    del self._current_model[tbid]
+                    dpg.enable_item(sender)
+
+            match action:
+                case 0:
+                    """Agregar una nueva fila a la tabla."""
+                    dlg = FormDetailDesigner(
+                        self._models[tbid](),
+                        "Nuevo",
+                        save_callback=add_handler,
+                    )
+                    dlg.show(close_handler)
+                case 1:
+                    """Actualizar la fila seleccionada en la tabla."""
+                    if tbid in self._current_model:
+                        rowid, data = self._current_model[tbid]
+                        rid = rowid
+                        dlg = FormDetailDesigner(
+                            data,
+                            "Actualizar",
+                            save_callback=update_handler,
+                        )
+                        dlg.show(close_handler)
+                    pass
+                case 2:
+                    # Eliminar la fila seleccionada de la tabla.
+                    delete()
+                    pass
+        pass
+
+    def __add_row(self, tbid, data):
+        with dpg.table_row(parent=tbid) as rowid:
+            self._ids_table_v2[tbid][rowid] = []
+            for f in self._cols[tbid]:
+                print(data)
+                attr = getattr(data, f.name)
+                if isinstance(attr, date):
+                    label_value = attr.strftime("%d/%m/%Y")
+                else:
+                    label_value = attr
+                selectable = dpg.add_selectable(
+                    label=label_value,
+                    span_columns=True,
+                    callback=self.__row_clicked,
+                )
+                dpg.set_item_user_data(selectable, (rowid, tbid))
+                self._ids_table_v2[tbid][rowid].append(selectable)
+            dpg.set_item_user_data(rowid, data)
 
     def add_combo(self, label, items, default_value, readonly) -> ControlID:
         """Agrega un campo de selección desplegable al formulario.
