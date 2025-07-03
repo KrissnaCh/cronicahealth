@@ -167,24 +167,25 @@ class DesignerBuilder:
                     dpg.add_table_column(label=f.metadata[TITLE])
                 for data in default_value:
                     self.__add_row(tbid, data)
-            with dpg.group(horizontal=True):
+            if not _readonly:
+                with dpg.group(horizontal=True):
 
-                dpg.add_image_button(
-                    texture_tag="ico_add",
-                    callback=self.__btn_callback,
-                    user_data=(tbid, 0),
-                )
+                    dpg.add_image_button(
+                        texture_tag="ico_add",
+                        callback=self.__btn_callback,
+                        user_data=(tbid, 0),
+                    )
 
-                dpg.add_image_button(
-                    texture_tag="ico_update",
-                    callback=self.__btn_callback,
-                    user_data=(tbid, 1),
-                )
-                dpg.add_image_button(
-                    texture_tag="ico_delete",
-                    callback=self.__btn_callback,
-                    user_data=(tbid, 2),
-                )
+                    dpg.add_image_button(
+                        texture_tag="ico_update",
+                        callback=self.__btn_callback,
+                        user_data=(tbid, 1),
+                    )
+                    dpg.add_image_button(
+                        texture_tag="ico_delete",
+                        callback=self.__btn_callback,
+                        user_data=(tbid, 2),
+                    )
         return (
             -1,
             tbid,
