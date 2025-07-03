@@ -5,7 +5,7 @@ from enum import Flag, auto
 import sqlite3
 import internal
 from typing import Any, Optional
-from internal import SQLiteFieldConstraint, SQLITE_FLAGS
+from internal import LISTMODEL, SQLiteFieldConstraint, SQLITE_FLAGS
 import json
 
 def python_type_to_sqlite(py_type):
@@ -370,7 +370,7 @@ def __tuple_to_dataclass(dataclass_type:type, data_tuple)->Any:
         raise ValueError("dataclass_type must be a dataclass.")
     field_types = [f.type for f in fields(dataclass_type)]
     values = []
-    for value, ftype in zip(data_tuple, field_types):
+    for value, ftype, f in zip(data_tuple, field_types, fields(dataclass_type)):
         if ftype == date or ftype == Optional[date]:
             # Intenta parsear fechas en formato YYYYMMDD
             value = str(value)
@@ -379,10 +379,14 @@ def __tuple_to_dataclass(dataclass_type:type, data_tuple)->Any:
             except Exception:
                 pass
         elif ftype == list or getattr(ftype, "__origin__", None) == list:
-            # Deserializar JSON a lista
+            # Deserializar JSON a lista y convertir fechas en dicts
             try:
-                value = json.loads(value) if value is not None else []
-                print(value, type(value))
+                items = json.loads(value, object_hook=_json_object_hook_with_date) if value is not None else []
+                # Si el campo tiene 'flagsv2' en metadata, convertir cada dict en el modelo esperado
+                model_type = f.metadata.get(LISTMODEL, None)
+                if model_type is not None and isinstance(items, list):
+                    items = [model_type(**item) if isinstance(item, dict) else item for item in items]
+                value = items
             except Exception:
                 value = []
         values.append(value)
@@ -410,3 +414,12 @@ def make_database(instances:list):
             execute(create_table_sql(instance))
         except Exception as e:
             print(f"{instance}: {e}")
+
+def _json_object_hook_with_date(d):
+    for k, v in d.items():
+        if isinstance(v, str) and len(v) == 8 and v.isdigit():
+            try:
+                d[k] = date(int(v[:4]), int(v[4:6]), int(v[6:8]))
+            except Exception:
+                pass
+    return d
