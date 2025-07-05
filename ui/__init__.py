@@ -151,13 +151,13 @@ class Application:
         )
         with dpg.theme() as global_theme:
             with dpg.theme_component(dpg.mvAll):
-
+                """
                 dpg.add_theme_style(
                     dpg.mvStyleVar_FrameRounding, 8, category=dpg.mvThemeCat_Core
                 )
                 dpg.add_theme_style(
                     dpg.mvStyleVar_FramePadding, 10, 10, category=dpg.mvThemeCat_Core
-                )
+                )"""
                 dpg.add_theme_color(
                     dpg.mvThemeCol_Border,
                     (0, 255, 39, 89),

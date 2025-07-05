@@ -4,7 +4,7 @@ import dearpygui.dearpygui as dpg
 window_count = 0
 window_base_x = 10  # posición X fija
 window_base_y = 50  # posición Y inicial
-window_spacing = 50  # distancia vertical entre ventanas
+window_spacing = 15  # distancia vertical entre ventanas
 
 
 def regtexture(path, tag):

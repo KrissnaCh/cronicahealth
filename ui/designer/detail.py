@@ -180,7 +180,7 @@ class FormDetailDesigner:
         with dpg.window(
             label=self._title,
             autosize=True,
-            max_size=(viewport_width - 300, viewport_height - 300),
+            max_size=(viewport_width - 100, viewport_height - 100),
             pos=(x_pos, y_pos),
             no_collapse=True,
             show=False,
